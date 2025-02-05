@@ -1,0 +1,21 @@
+{
+  "model": {
+    "class_name": "ECAEncoder",
+    "pretrained_model_name_or_path": "experiments/mm/eca/checkpoint-36/context_model"
+ },
+  "tokenizer": {
+    "class_name": "BertTokenizer",
+    "pretrained_model_name_or_path": "bert-base-uncased"
+  },
+  "tokenization_kwargs": {
+    "max_length": 256,
+    "padding": "longest"
+  },
+    "key": "passage",
+    "save_as": "ECA_few_shot",
+    "output_key": "pooler_output",
+    "map_kwargs":
+    {
+        "batch_size": 2048
+    }
+}

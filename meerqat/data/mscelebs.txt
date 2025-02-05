@@ -1,0 +1,261 @@
+==================================================================================================
+
+
+Xử lý và trích xuất dữ liệu từ bộ dữ liệu MS-Celeb-1M. Đây là một bộ dữ liệu chứa thông tin về
+các cá nhân cùng với hình ảnh của họ.
+
+
+==================================================================================================
+
+
+Các hằng số và biến số:
+TOTAL_LINES: Hằng số này định nghĩa tổng số dòng trong dữ liệu MS-Celeb-1M,
+là 8456240. Đây là một giá trị cố định dùng để kiểm soát tiến trình khi đọc dữ liệu.
+
+mscelebs_path: Đây là đường dẫn tới tệp CSV chứa thông tin về các hình ảnh trong MS-Celeb-1M.
+Tệp này chứa dữ liệu các bức ảnh đã được cắt và phân loại.
+
+subset_path: Đường dẫn tới thư mục con chứa dữ liệu con (subset) của dự án.
+
+entities_path: Đường dẫn tới tệp JSON chứa thông tin về các thực thể (entities),
+được sử dụng để ánh xạ các đối tượng trong dữ liệu.
+
+
+
+==================================================================================================
+
+
+
+FUNCTION: wikidata2freebase(mid)
+
+
+
+1. Mục đích:
+Chuyển đổi định dạng của MID (Machine ID) từ dạng của Wikidata (/m/0xxx) sang dạng của Freebase (m.0xxx).
+
+2. Input:
+mid (str): Một chuỗi biểu diễn MID của Wikidata, ví dụ: /m/0xyz.
+
+3. Output:
+Chuỗi MID đã chuyển đổi sang định dạng Freebase, ví dụ: m.0xyz.
+
+4. Giải thích code:
+Hàm cắt bỏ ba ký tự đầu tiên (/m/) của MID và thay chúng bằng m.. Phần còn lại của chuỗi MID được giữ nguyên.
+
+5. Ví dụ minh họa:
+mid = "/m/0xyz"
+result = wikidata2freebase(mid)
+print(result)  # Output: "m.0xyz"
+
+
+
+==================================================================================================
+
+
+
+FUNCTION: freebase2wikidata(entities)
+
+
+
+1. Mục đích:
+Tạo một ánh xạ (mapping) giữa MID của Freebase và QID của Wikidata từ dữ liệu đầu vào.
+
+2. Input:
+entities (dict): Một dictionary chứa các thực thể, trong đó mỗi thực thể có thể có trường freebase với định dạng như {'value': '/m/0xyz'}.
+
+3. Output:
+mapping (dict): Một dictionary ánh xạ từ MID của Freebase (dạng m.0xyz) sang QID của Wikidata.
+
+4. Giải thích code:
+Lặp qua tất cả các thực thể trong dictionary entities.
+Lấy trường freebase (nếu có), chuyển đổi định dạng của MID từ Wikidata sang Freebase bằng hàm wikidata2freebase.
+Lưu cặp ánh xạ giữa MID (Freebase) và QID (Wikidata) vào dictionary mapping.
+
+5. Ví dụ minh họa:
+entities = {
+    "Q123": {"freebase": {"value": "/m/0xyz"}},
+    "Q456": {"freebase": {"value": "/m/0abc"}},
+    "Q789": {}
+}
+mapping = freebase2wikidata(entities)
+print(mapping)
+# Output: {"m.0xyz": "Q123", "m.0abc": "Q456"}
+
+
+
+==================================================================================================
+
+
+
+FUNCTION: count_entities(entities, mscelebs_path)
+
+
+
+1. Mục đích:
+Đếm số lần mỗi thực thể (entity) xuất hiện trong tệp dữ liệu MS-Celeb-1M
+và cập nhật thông tin vào dictionary entities.
+
+2. Input:
+entities (dict): Một dictionary chứa thông tin về các thực thể, được ánh xạ từ Freebase sang Wikidata.
+mscelebs_path (str hoặc Path): Đường dẫn tới tệp dữ liệu MS-Celeb-1M.
+
+3. Output:
+entities (dict): Dictionary đầu vào, được cập nhật thêm trường "mscelebs" thể hiện số lần xuất hiện của thực thể trong dữ liệu MS-Celeb-1M.
+
+4. Giải thích code:
+Gọi hàm freebase2wikidata để ánh xạ từ MID (Freebase) sang QID (Wikidata).
+Đọc tệp MS-Celeb-1M (định dạng TSV) bằng thư viện csv.
+Với mỗi dòng trong tệp:
+Lấy MID (Freebase) từ cột đầu tiên (row[0]).
+Kiểm tra MID này có ánh xạ đến QID nào trong fb2wd không.
+Nếu có, tăng số lần xuất hiện ("mscelebs") của QID tương ứng.
+Trả về dictionary entities đã được cập nhật.
+
+5. Ví dụ minh họa:
+# entities đầu vào
+entities = {
+    "Q123": {"freebase": {"value": "/m/0xyz"}},
+    "Q456": {"freebase": {"value": "/m/0abc"}},
+}
+# Giả sử tệp MS-Celeb-1M có nội dung:
+# m.0xyz    data1   ...
+# m.0xyz    data2   ...
+# m.0abc    data3   ...
+mscelebs_path = "path/to/msceleb.tsv"
+updated_entities = count_entities(entities, mscelebs_path)
+print(updated_entities)
+# Output:
+# {
+#     "Q123": {"freebase": {"value": "/m/0xyz"}, "mscelebs": 2},
+#     "Q456": {"freebase": {"value": "/m/0abc"}, "mscelebs": 1},
+# }
+
+
+
+==================================================================================================
+
+
+
+FUNCTION: extract(mscelebs_path)
+
+
+
+1. Mục đích:
+Trích xuất và lưu hình ảnh từ tệp dữ liệu MS-Celeb-1M.
+Các hình ảnh được lưu trong thư mục con với tên MID của thực thể.
+
+2. Input:
+mscelebs_path (str hoặc Path): Đường dẫn tới tệp dữ liệu MS-Celeb-1M.
+
+3. Output:
+Không có giá trị trả về. Hình ảnh được lưu dưới dạng .jpg trong thư mục con jpgs.
+
+4. Giải thích code:
+Tạo thư mục đầu ra (output_dir) để lưu hình ảnh.
+Đọc tệp MS-Celeb-1M (định dạng TSV) bằng thư viện csv.
+Với mỗi dòng:
+Lấy thông tin: MID (row[0]), imgSearchRank (row[1]), faceID (row[4]), và dữ liệu hình ảnh được mã hóa base64 (row[-1]).
+Giải mã chuỗi base64 thành dữ liệu nhị phân (data).
+Tạo thư mục riêng cho MID nếu chưa tồn tại.
+Lưu dữ liệu hình ảnh thành tệp .jpg trong thư mục của MID.
+Sử dụng tqdm để hiển thị tiến trình.
+
+5. Ví dụ minh họa:
+# Giả sử tệp MS-Celeb-1M có nội dung:
+# m.0xyz    1    ...    ...    123    ...    <base64_image_data>
+mscelebs_path = "path/to/msceleb.tsv"
+extract(mscelebs_path)
+# Kết quả:
+# Tệp hình ảnh được lưu tại:
+# jpgs/m.0xyz/1-123.jpg
+
+
+
+==================================================================================================
+
+
+
+
+MAIN
+
+
+
+a. Chế độ extract:
+Ý nghĩa:
+Trích xuất và lưu trữ hình ảnh từ tệp MS-Celeb-1M.
+
+Quy trình:
+Hàm extract(mscelebs_path) được gọi, trong đó mscelebs_path là đường dẫn tới tệp MS-Celeb-1M.
+Các hình ảnh trong tệp này sẽ được giải mã và lưu thành các tệp .jpg trong thư mục con với tên MID của thực thể.
+Chế độ này chỉ thực hiện việc trích xuất hình ảnh và không thao tác với các dữ liệu khác.
+
+Lệnh dòng lệnh:
+python script.py extract <subset>
+extract: Kích hoạt chế độ trích xuất hình ảnh.
+<subset>: Tên tập dữ liệu cần xử lý (được sử dụng để xác định đường dẫn lưu trữ hình ảnh).
+
+Ví dụ minh họa:
+python script.py extract train
+Tập tin FaceImageCroppedWithOutAlignment.tsv sẽ được xử lý.
+Hình ảnh được lưu trong thư mục DATA_ROOT_PATH/meerqat_train/jpgs.
+
+
+b. Chế độ entities:
+Ý nghĩa:
+Đếm số lần xuất hiện của các thực thể trong tệp MS-Celeb-1M và cập nhật thông tin này vào tệp entities.json.
+
+Quy trình:
+Tệp entities.json được mở và tải dữ liệu JSON vào biến entities.
+Gọi hàm count_entities(entities, mscelebs_path) để:
+Đếm số lần xuất hiện của mỗi thực thể dựa trên MID từ tệp MS-Celeb-1M.
+Cập nhật thông tin đếm được vào trường "mscelebs" của từng thực thể trong entities.
+Lưu lại dữ liệu đã cập nhật vào entities.json.
+
+Lệnh dòng lệnh:
+python script.py entities <subset>
+entities: Kích hoạt chế độ xử lý thực thể.
+<subset>: Tên tập dữ liệu cần xử lý (được sử dụng để xác định đường dẫn tệp entities.json).
+
+Ví dụ minh họa:
+python script.py entities train
+Tệp entities.json trong thư mục DATA_ROOT_PATH/meerqat_train được mở và cập nhật thông tin.
+Sau khi hoàn tất, tệp entities.json được ghi đè với dữ liệu đã cập nhật.
+
+
+
+Quy trình đầy đủ khi chạy script:
+Chế độ extract (Trích xuất hình ảnh):
+Lệnh:
+python script.py extract train
+
+Giải thích:
+Tệp MS-Celeb-1M (FaceImageCroppedWithOutAlignment.tsv) được xử lý để trích xuất hình ảnh.
+Hình ảnh được lưu trong thư mục DATA_ROOT_PATH/meerqat_train/jpgs.
+
+
+Chế độ entities (Cập nhật thực thể):
+Lệnh:
+python script.py entities train
+
+Giải thích:
+Tệp entities.json trong thư mục DATA_ROOT_PATH/meerqat_train được mở.
+Hàm count_entities được sử dụng để đếm số lần xuất hiện của các thực thể trong tệp MS-Celeb-1M.
+Kết quả được lưu lại trong entities.json.
+
+
+
+Lưu ý quan trọng khi sử dụng:
+Tệp cấu hình và dữ liệu:
+
+Đảm bảo rằng tệp MS-Celeb-1M (FaceImageCroppedWithOutAlignment.tsv) tồn tại tại đường dẫn DATA_ROOT_PATH.
+Thư mục meerqat_<subset> phải chứa tệp entities.json khi sử dụng chế độ entities.
+Chế độ xử lý:
+
+Sử dụng extract để trích xuất và lưu hình ảnh từ tệp MS-Celeb-1M.
+Sử dụng entities để đếm số lần xuất hiện của các thực thể trong tệp MS-Celeb-1M và cập nhật vào entities.json.
+Tham số dòng lệnh:
+
+<subset>: Đặt tên cho tập dữ liệu cần xử lý (ví dụ: train, test).
+Tiến trình (Progress):
+
+Khi thực hiện, chương trình sẽ hiển thị tiến trình bằng tqdm để người dùng theo dõi.

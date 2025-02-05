@@ -1,0 +1,768 @@
+
+
+<!DOCTYPE html>
+
+
+<html lang="en" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+    <title>meerqat.models.qa module &#8212; meerqat v4.0.0-alpha documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="_static/styles/theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="_static/styles/bootstrap.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+
+  
+  <link href="_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=e353d410970836974a52" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=e353d410970836974a52" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52" />
+
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'meerqat.models.qa';</script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__primary"
+          id="__primary"/>
+  <label class="overlay overlay-primary" for="__primary"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__secondary"
+          id="__secondary"/>
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+  
+    <nav class="bd-header navbar navbar-expand-lg bd-navbar">
+<div class="bd-header__inner bd-page-width">
+  <label class="sidebar-toggle primary-toggle" for="__primary">
+    <span class="fa-solid fa-bars"></span>
+  </label>
+  
+  <div class="navbar-header-items__start">
+    
+      <div class="navbar-item">
+  
+
+<a class="navbar-brand logo" href="index.html">
+  
+  
+  
+  
+  
+    <p class="title logo__title">meerqat v4.0.0-alpha documentation</p>
+  
+</a></div>
+    
+  </div>
+  
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item"><nav class="navbar-nav">
+  <p class="sidebar-header-items__title"
+     role="heading"
+     aria-level="1"
+     aria-label="Site Navigation">
+    Site Navigation
+  </p>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+  </button>
+`);
+</script>
+        </div>
+      
+      
+        <div class="navbar-item">
+<script>
+document.write(`
+  <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+  </button>
+`);
+</script></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+  </button>
+`);
+</script>
+    </div>
+  
+
+  
+    <label class="sidebar-toggle secondary-toggle" for="__secondary">
+      <span class="fa-solid fa-outdent"></span>
+    </label>
+  
+</div>
+
+    </nav>
+  
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          <div class="navbar-item"><nav class="navbar-nav">
+  <p class="sidebar-header-items__title"
+     role="heading"
+     aria-level="1"
+     aria-label="Site Navigation">
+    Site Navigation
+  </p>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+  </ul>
+</nav></div>
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+<script>
+document.write(`
+  <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+  </button>
+`);
+</script></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item"><nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="meerqat.data.html">meerqat.data package</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="meerqat.data.infoseek.html">meerqat.data.infoseek module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="meerqat.data.kilt2vqa.html">meerqat.data.kilt2vqa module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="meerqat.data.labelstudio.html">meerqat.data.labelstudio module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="meerqat.data.loading.html">meerqat.data.loading module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="meerqat.data.mscelebs.html">meerqat.data.mscelebs module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="meerqat.data.utils.html">meerqat.data.utils module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="meerqat.data.wiki.html">meerqat.data.wiki module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="meerqat.data.wikidump.html">meerqat.data.wikidump module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="meerqat.data.wit.html">meerqat.data.wit module</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="meerqat.image.html">meerqat.image package</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="meerqat.image.embedding.html">meerqat.image.embedding module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="meerqat.image.face_box.html">meerqat.image.face_box module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="meerqat.image.face_detection.html">meerqat.image.face_detection module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="meerqat.image.face_recognition.html">meerqat.image.face_recognition module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="meerqat.image.resize.html">meerqat.image.resize module</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="meerqat.interact.html">meerqat.interact package</a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-3"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="meerqat.interact.system.html">meerqat.interact.system module</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="meerqat.ir.html">meerqat.ir package</a><input class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-4"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="meerqat.ir.embedding.html">meerqat.ir.embedding module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="meerqat.ir.fuse.html">meerqat.ir.fuse module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="meerqat.ir.hp.html">meerqat.ir.hp module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="meerqat.ir.metrics.html">meerqat.ir.metrics module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="meerqat.ir.search.html">meerqat.ir.search module</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="meerqat.models.html">meerqat.models package</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-5"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="meerqat.models.bert.html">meerqat.models.bert module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="meerqat.models.image.html">meerqat.models.image module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="meerqat.models.mm.html">meerqat.models.mm module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="meerqat.models.outputs.html">meerqat.models.outputs module</a></li>
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">meerqat.models.qa module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="meerqat.models.rr.html">meerqat.models.rr module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="meerqat.models.utils.html">meerqat.models.utils module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="meerqat.models.vilt.html">meerqat.models.vilt module</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="meerqat.train.html">meerqat.train package</a><input class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-6"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="meerqat.train.callbacks.html">meerqat.train.callbacks module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="meerqat.train.data.html">meerqat.train.data module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="meerqat.train.metrics.html">meerqat.train.metrics module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="meerqat.train.optim.html">meerqat.train.optim module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="meerqat.train.save_ptm.html">meerqat.train.save_ptm module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="meerqat.train.trainee.html">meerqat.train.trainee module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="meerqat.train.trainer.html">meerqat.train.trainer module</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="meerqat.viz.html">meerqat.viz package</a><input class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-7"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="meerqat.viz.html.html">meerqat.viz.html module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="meerqat.viz.stats.html">meerqat.viz.stats module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="meerqat.viz.umap.html">meerqat.viz.umap module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="meerqat.viz.wtl_filter.html">meerqat.viz.wtl_filter module</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+
+
+<nav aria-label="Breadcrumbs">
+  <ul class="bd-breadcrumbs" role="navigation" aria-label="Breadcrumb">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    <li class="breadcrumb-item active" aria-current="page">meerqat.models.qa module</li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article" role="main">
+                  
+  <section id="module-meerqat.models.qa">
+<span id="meerqat-models-qa-module"></span><h1>meerqat.models.qa module<a class="headerlink" href="#module-meerqat.models.qa" title="Permalink to this heading">#</a></h1>
+<p>Utility functions specific to Question Answering.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="meerqat.models.qa.get_best_spans">
+<span class="sig-prename descclassname"><span class="pre">meerqat.models.qa.</span></span><span class="sig-name descname"><span class="pre">get_best_spans</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start_probs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_probs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cannot_be_first_token</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/meerqat/models/qa.html#get_best_spans"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#meerqat.models.qa.get_best_spans" title="Permalink to this definition">#</a></dt>
+<dd><p>Get the best scoring spans from start and end probabilities</p>
+<dl class="simple">
+<dt>notations:</dt><dd><ul class="simple">
+<li><p>N - number of distinct questions</p></li>
+<li><p>M - number of passages per question in a batch</p></li>
+<li><p>L - sequence length</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>start_probs</strong> (<em>Tensor</em>) – shape (N, M, L)</p></li>
+<li><p><strong>end_probs</strong> (<em>Tensor</em>) – shape (N, M, L)</p></li>
+<li><p><strong>weights</strong> (<em>Tensor</em><em>, </em><em>optional</em>) – shape (N, M)
+Used to weigh the spans scores, e.g. might be BM25 scores from the retriever</p></li>
+<li><p><strong>cannot_be_first_token</strong> (<em>bool</em><em>, </em><em>optional</em>) – (Default) null out the scores of start/end in the first token
+(e.g. “[CLS]”, used during training for irrelevant passages)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>passage_indices</strong> (<em>Tensor</em>) – shape (N, )</p></li>
+<li><p><strong>start_indices, end_indices</strong> (<em>Tensor</em>) – shape (N, )
+start (inclusive) and end (exclusive) index of each span</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="meerqat.models.qa.MultiPassageBERT">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">meerqat.models.qa.</span></span><span class="sig-name descname"><span class="pre">MultiPassageBERT</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fuse_ir_score</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/meerqat/models/qa.html#MultiPassageBERT"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#meerqat.models.qa.MultiPassageBERT" title="Permalink to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BertForQuestionAnswering</span></code></p>
+<p>PyTorch/Transformers implementation of Multi-passage BERT <a class="footnote-reference brackets" href="#id3" id="id1" role="doc-noteref"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></a> (based on the global normalization <a class="footnote-reference brackets" href="#id4" id="id2" role="doc-noteref"><span class="fn-bracket">[</span>2<span class="fn-bracket">]</span></a>)
+i.e. groups passages per question before computing the softmax (and the NLL loss)
+so that spans scores are comparable across passages</p>
+<p>Code based on transformers.BertForQuestionAnswering, dpr.models.Reader
+and <a class="github reference external" href="https://github.com/allenai/document-qa/blob/master/docqa/nn/span_prediction.py">allenai/document-qa</a></p>
+<p class="rubric">References</p>
+<aside class="footnote brackets" id="id3" role="note">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id1">1</a><span class="fn-bracket">]</span></span>
+<p>Zhiguo Wang, Patrick Ng, Xiaofei Ma, Ramesh Nallapati, and Bing Xiang.
+2019. Multi-passage BERT: A Globally Normalized BERT Model for Open-domain Question Answering.
+In Proceedings of the 2019 Conference on Empirical Methods in Natural Language Processing
+and the 9th International Joint Conference on Natural Language Processing (EMNLP-IJCNLP),
+pages 5878–5882, Hong Kong, China. Association for Computational Linguistics.</p>
+</aside>
+<aside class="footnote brackets" id="id4" role="note">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id2">2</a><span class="fn-bracket">]</span></span>
+<p>Christopher Clark and Matt Gardner. 2018. Simple and Effective Multi-Paragraph Reading Comprehension.
+In Proceedings of the 56th Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers),
+pages 845–855, Melbourne, Australia. Association for Computational Linguistics.</p>
+</aside>
+<dl class="py method">
+<dt class="sig sig-object py" id="meerqat.models.qa.MultiPassageBERT.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_ids</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">passage_scores</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_positions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_positions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">answer_mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_dict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/meerqat/models/qa.html#MultiPassageBERT.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#meerqat.models.qa.MultiPassageBERT.forward" title="Permalink to this definition">#</a></dt>
+<dd><dl class="simple">
+<dt>notations:</dt><dd><ul class="simple">
+<li><p>N - number of distinct questions</p></li>
+<li><p>M - number of passages per question in a batch</p></li>
+<li><p>L - sequence length</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>input_ids</strong> (<em>Tensor</em><em>[</em><em>int</em><em>]</em>) – shape (N * M, L)
+There should always be a constant number of passages (relevant or not) per question</p></li>
+<li><p><strong>passage_scores</strong> (<em>FloatTensor</em><em>, </em><em>optional</em>) – shape (N * M, )
+If self.fuse_ir_score, will be fused with start_logits and end_logits before computing loss</p></li>
+<li><p><strong>start_positions</strong> (<em>Tensor</em><em>[</em><em>int</em><em>]</em><em>, </em><em>optional</em>) – shape (N, M, max_n_answers)
+The answer might be found several time in the same passage, maximum <code class="docutils literal notranslate"><span class="pre">max_n_answers</span></code> times
+Defaults to None (i.e. don’t compute the loss)</p></li>
+<li><p><strong>end_positions</strong> (<em>Tensor</em><em>[</em><em>int</em><em>]</em><em>, </em><em>optional</em>) – shape (N, M, max_n_answers)
+The answer might be found several time in the same passage, maximum <code class="docutils literal notranslate"><span class="pre">max_n_answers</span></code> times
+Defaults to None (i.e. don’t compute the loss)</p></li>
+<li><p><strong>answer_mask</strong> (<em>Tensor</em><em>[</em><em>int</em><em>]</em><em>, </em><em>optional</em>) – shape (N, M, max_n_answers)
+Used to mask the loss for answers that are not <code class="docutils literal notranslate"><span class="pre">max_n_answers</span></code> times in the passage
+Required if start_positions and end_positions are specified</p></li>
+<li><p><strong>**kwargs</strong> (<em>additional arguments are passed to BERT after being reshape like</em>) – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="meerqat.models.qa.MultiPassageECA">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">meerqat.models.qa.</span></span><span class="sig-name descname"><span class="pre">MultiPassageECA</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/meerqat/models/qa.html#MultiPassageECA"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#meerqat.models.qa.MultiPassageECA" title="Permalink to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="meerqat.models.mm.html#meerqat.models.mm.ECAEncoder" title="meerqat.models.mm.ECAEncoder"><code class="xref py py-class docutils literal notranslate"><span class="pre">ECAEncoder</span></code></a></p>
+<p>Like MultiPassageBERT with a ECA backbone instead of BERT</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="meerqat.models.qa.MultiPassageECA.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text_inputs</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_positions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_positions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">answer_mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_dict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/meerqat/models/qa.html#MultiPassageECA.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#meerqat.models.qa.MultiPassageECA.forward" title="Permalink to this definition">#</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>text_inputs</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>torch.LongTensor</em><em>]</em>) – usual BERT inputs, see transformers.BertModel</p></li>
+<li><p><strong>face_inputs</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>torch.FloatTensor</em><em>]</em>) – <dl class="simple">
+<dt>{</dt><dd><p>“face”: (batch_size, n_images, n_faces, face_dim),
+“bbox”: (batch_size, n_images, n_faces, bbox_dim),
+“attention_mask”: (batch_size, n_images, n_faces)</p>
+</dd>
+</dl>
+<p>}</p>
+</p></li>
+<li><p><strong>image_inputs</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>dict</em><em>[</em><em>str</em><em>, </em><em>torch.FloatTensor</em><em>]</em><em>]</em>) – <dl>
+<dt>{</dt><dd><p>model:
+{</p>
+<blockquote>
+<div><p>”input”: (batch_size, n_images, image_dim)
+“attention_mask”: (batch_size, n_images)</p>
+</div></blockquote>
+<p>}</p>
+</dd>
+</dl>
+<p>}</p>
+</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="meerqat.models.qa.ViltMultiImageEmbeddings">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">meerqat.models.qa.</span></span><span class="sig-name descname"><span class="pre">ViltMultiImageEmbeddings</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/meerqat/models/qa.html#ViltMultiImageEmbeddings"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#meerqat.models.qa.ViltMultiImageEmbeddings" title="Permalink to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="meerqat.models.vilt.html#meerqat.models.vilt.ViltEmbeddings" title="meerqat.models.vilt.ViltEmbeddings"><code class="xref py py-class docutils literal notranslate"><span class="pre">ViltEmbeddings</span></code></a></p>
+<p>Similar to the ‘triplet’ strategy of UNITER,
+patches of multiple images are concatenated in the sequence dimension.
+The resulting embedding thus have a sequence length of #tokens + num_patches*num_images</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="meerqat.models.qa.ViltMultiImageEmbeddings.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_ids</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attention_mask</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">token_type_ids</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pixel_values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pixel_mask</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">passage_pixel_values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">passage_pixel_mask</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs_embeds</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/meerqat/models/qa.html#ViltMultiImageEmbeddings.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#meerqat.models.qa.ViltMultiImageEmbeddings.forward" title="Permalink to this definition">#</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>`</strong><strong>(</strong><strong>batch_size</strong> (<em>inputs_embeds</em><em> (</em><em>torch.FloatTensor of shape</em>) – <p>Indices of input sequence tokens in the vocabulary. Indices can be obtained using [<cite>BertTokenizer</cite>]. See
+[<cite>PreTrainedTokenizer.encode</cite>] and [<cite>PreTrainedTokenizer.__call__</cite>] for details.</p>
+</p></li>
+<li><p><strong>#tokens</strong><strong>)</strong><strong>`</strong><strong>)</strong> – Indices of input sequence tokens in the vocabulary. Indices can be obtained using [<cite>BertTokenizer</cite>]. See
+[<cite>PreTrainedTokenizer.encode</cite>] and [<cite>PreTrainedTokenizer.__call__</cite>] for details.</p></li>
+<li><p><strong>`</strong><strong>(</strong><strong>batch_size</strong> – <p>Mask to avoid performing attention on padding token indices. Mask values selected in <cite>[0, 1]</cite>:
+- 1 for tokens that are <strong>not masked</strong>,
+- 0 for tokens that are <strong>masked</strong>.</p>
+</p></li>
+<li><p><strong>#tokens}</strong><strong>)</strong><strong>`</strong><strong>)</strong> – Mask to avoid performing attention on padding token indices. Mask values selected in <cite>[0, 1]</cite>:
+- 1 for tokens that are <strong>not masked</strong>,
+- 0 for tokens that are <strong>masked</strong>.</p></li>
+<li><p><strong>`</strong><strong>(</strong><strong>batch_size</strong> – <p>Segment token indices to indicate first and second portions of the inputs. Indices are selected in <cite>[0,
+1]</cite>:
+- 0 corresponds to a <em>sentence A</em> token,
+- 1 corresponds to a <em>sentence B</em> token.</p>
+</p></li>
+<li><p><strong>#tokens</strong><strong>)</strong><strong>`</strong><strong>)</strong> – Segment token indices to indicate first and second portions of the inputs. Indices are selected in <cite>[0,
+1]</cite>:
+- 0 corresponds to a <em>sentence A</em> token,
+- 1 corresponds to a <em>sentence B</em> token.</p></li>
+<li><p><strong>pixel_values</strong> – Pixel values. Pixel values can be obtained using [<cite>ViltFeatureExtractor</cite>]. See
+[<cite>ViltFeatureExtractor.__call__</cite>] for details.</p></li>
+<li><p><strong>`</strong><strong>(</strong><strong>batch_size</strong> – <p>Pixel values. Pixel values can be obtained using [<cite>ViltFeatureExtractor</cite>]. See
+[<cite>ViltFeatureExtractor.__call__</cite>] for details.</p>
+</p></li>
+<li><p><strong>num_channels</strong> – Pixel values. Pixel values can be obtained using [<cite>ViltFeatureExtractor</cite>]. See
+[<cite>ViltFeatureExtractor.__call__</cite>] for details.</p></li>
+<li><p><strong>height</strong> – Pixel values. Pixel values can be obtained using [<cite>ViltFeatureExtractor</cite>]. See
+[<cite>ViltFeatureExtractor.__call__</cite>] for details.</p></li>
+<li><p><strong>width</strong><strong>)</strong><strong>`</strong><strong>)</strong> – Pixel values. Pixel values can be obtained using [<cite>ViltFeatureExtractor</cite>]. See
+[<cite>ViltFeatureExtractor.__call__</cite>] for details.</p></li>
+<li><p><strong>pixel_mask</strong> – <p>Mask to avoid performing attention on padding pixel values. Mask values selected in <cite>[0, 1]</cite>:</p>
+<ul>
+<li><p>1 for pixels that are real (i.e. <strong>not masked</strong>),</p></li>
+<li><p>0 for pixels that are padding (i.e. <strong>masked</strong>).</p></li>
+</ul>
+</p></li>
+<li><p><strong>`</strong><strong>(</strong><strong>batch_size</strong> – <p>Mask to avoid performing attention on padding pixel values. Mask values selected in <cite>[0, 1]</cite>:</p>
+<ul>
+<li><p>1 for pixels that are real (i.e. <strong>not masked</strong>),</p></li>
+<li><p>0 for pixels that are padding (i.e. <strong>masked</strong>).</p></li>
+</ul>
+</p></li>
+<li><p><strong>height</strong> – <p>Mask to avoid performing attention on padding pixel values. Mask values selected in <cite>[0, 1]</cite>:</p>
+<ul>
+<li><p>1 for pixels that are real (i.e. <strong>not masked</strong>),</p></li>
+<li><p>0 for pixels that are padding (i.e. <strong>masked</strong>).</p></li>
+</ul>
+</p></li>
+<li><p><strong>width</strong><strong>)</strong><strong>`</strong><strong>)</strong> – <p>Mask to avoid performing attention on padding pixel values. Mask values selected in <cite>[0, 1]</cite>:</p>
+<ul>
+<li><p>1 for pixels that are real (i.e. <strong>not masked</strong>),</p></li>
+<li><p>0 for pixels that are padding (i.e. <strong>masked</strong>).</p></li>
+</ul>
+</p></li>
+<li><p><strong>`</strong><strong>(</strong><strong>batch_size</strong> – <p>Optionally, instead of passing <cite>input_ids</cite> you can choose to directly pass an embedded representation. This
+is useful if you want more control over how to convert <cite>input_ids</cite> indices into associated vectors than the
+model’s internal embedding lookup matrix.</p>
+</p></li>
+<li><p><strong>#tokens</strong> – Optionally, instead of passing <cite>input_ids</cite> you can choose to directly pass an embedded representation. This
+is useful if you want more control over how to convert <cite>input_ids</cite> indices into associated vectors than the
+model’s internal embedding lookup matrix.</p></li>
+<li><p><strong>hidden_size</strong><strong>)</strong><strong>`</strong><strong>)</strong> – Optionally, instead of passing <cite>input_ids</cite> you can choose to directly pass an embedded representation. This
+is useful if you want more control over how to convert <cite>input_ids</cite> indices into associated vectors than the
+model’s internal embedding lookup matrix.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="meerqat.models.qa.ViltMultiImageModel">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">meerqat.models.qa.</span></span><span class="sig-name descname"><span class="pre">ViltMultiImageModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">add_pooling_layer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/meerqat/models/qa.html#ViltMultiImageModel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#meerqat.models.qa.ViltMultiImageModel" title="Permalink to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ViltModel</span></code></p>
+<p>Same as ViltModel with ViltMultiImageEmbeddings instead of ViltEmbeddings</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="meerqat.models.qa.ViltMultiImageModel.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_ids</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">LongTensor</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attention_mask</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">FloatTensor</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">token_type_ids</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">LongTensor</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pixel_values</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">FloatTensor</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pixel_mask</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">LongTensor</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">passage_pixel_values</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">FloatTensor</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">passage_pixel_mask</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">LongTensor</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">head_mask</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">FloatTensor</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs_embeds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">FloatTensor</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">image_embeds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">FloatTensor</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">image_token_type_idx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_attentions</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">bool</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_hidden_states</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">bool</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_dict</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">bool</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">BaseModelOutputWithPooling</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">FloatTensor</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/meerqat/models/qa.html#ViltMultiImageModel.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#meerqat.models.qa.ViltMultiImageModel.forward" title="Permalink to this definition">#</a></dt>
+<dd><p>The [<cite>ViltModel</cite>] forward method, overrides the <cite>__call__</cite> special method.</p>
+<p>&lt;Tip&gt;</p>
+<p>Although the recipe for forward pass needs to be defined within this function, one should call the [<cite>Module</cite>]
+instance afterwards instead of this since the former takes care of running the pre and post processing steps while
+the latter silently ignores them.</p>
+<p>&lt;/Tip&gt;</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>input_ids</strong> (<cite>torch.LongTensor</cite> of shape <cite>({0})</cite>) – Indices of input sequence tokens in the vocabulary. Indices can be obtained using [<cite>BertTokenizer</cite>]. See
+[<cite>PreTrainedTokenizer.encode</cite>] and [<cite>PreTrainedTokenizer.__call__</cite>] for details. [What are input
+IDs?](../glossary#input-ids)</p></li>
+<li><p><strong>attention_mask</strong> (<cite>torch.FloatTensor</cite> of shape <cite>({0})</cite>, <em>optional</em>) – Mask to avoid performing attention on padding token indices. Mask values selected in <cite>[0, 1]</cite>:
+- 1 for tokens that are <strong>not masked</strong>,
+- 0 for tokens that are <strong>masked</strong>.
+[What are attention masks?](../glossary#attention-mask)</p></li>
+<li><p><strong>token_type_ids</strong> (<cite>torch.LongTensor</cite> of shape <cite>({0})</cite>, <em>optional</em>) – Segment token indices to indicate first and second portions of the inputs. Indices are selected in <cite>[0,
+1]</cite>:
+- 0 corresponds to a <em>sentence A</em> token,
+- 1 corresponds to a <em>sentence B</em> token.
+[What are token type IDs?](../glossary#token-type-ids)</p></li>
+<li><p><strong>pixel_values</strong> (<cite>torch.FloatTensor</cite> of shape <cite>(batch_size, num_channels, height, width)</cite>) – Pixel values. Pixel values can be obtained using [<cite>ViltFeatureExtractor</cite>]. See
+[<cite>ViltFeatureExtractor.__call__</cite>] for details.</p></li>
+<li><p><strong>pixel_mask</strong> (<cite>torch.LongTensor</cite> of shape <cite>(batch_size, height, width)</cite>, <em>optional</em>) – <p>Mask to avoid performing attention on padding pixel values. Mask values selected in <cite>[0, 1]</cite>:</p>
+<ul>
+<li><p>1 for pixels that are real (i.e. <strong>not masked</strong>),</p></li>
+<li><p>0 for pixels that are padding (i.e. <strong>masked</strong>).</p></li>
+</ul>
+<p><a class="reference external" href="../glossary.html#attention-mask">What are attention masks?</a></p>
+</p></li>
+<li><p><strong>head_mask</strong> (<cite>torch.FloatTensor</cite> of shape <cite>(num_heads,)</cite> or <cite>(num_layers, num_heads)</cite>, <em>optional</em>) – Mask to nullify selected heads of the self-attention modules. Mask values selected in <cite>[0, 1]</cite>:
+- 1 indicates the head is <strong>not masked</strong>,
+- 0 indicates the head is <strong>masked</strong>.</p></li>
+<li><p><strong>inputs_embeds</strong> (<cite>torch.FloatTensor</cite> of shape <cite>({0}, hidden_size)</cite>, <em>optional</em>) – Optionally, instead of passing <cite>input_ids</cite> you can choose to directly pass an embedded representation. This
+is useful if you want more control over how to convert <cite>input_ids</cite> indices into associated vectors than the
+model’s internal embedding lookup matrix.</p></li>
+<li><p><strong>image_embeds</strong> (<cite>torch.FloatTensor</cite> of shape <cite>(batch_size, num_patches, hidden_size)</cite>, <em>optional</em>) – Optionally, instead of passing <cite>pixel_values</cite>, you can choose to directly pass an embedded representation.
+This is useful if you want more control over how to convert <cite>pixel_values</cite> into patch embeddings.</p></li>
+<li><p><strong>output_attentions</strong> (<cite>bool</cite>, <em>optional</em>) – Whether or not to return the attentions tensors of all attention layers. See <cite>attentions</cite> under returned
+tensors for more detail.</p></li>
+<li><p><strong>output_hidden_states</strong> (<cite>bool</cite>, <em>optional</em>) – Whether or not to return the hidden states of all layers. See <cite>hidden_states</cite> under returned tensors for
+more detail.</p></li>
+<li><p><strong>return_dict</strong> (<cite>bool</cite>, <em>optional</em>) – Whether or not to return a [<cite>~utils.ModelOutput</cite>] instead of a plain tuple.</p></li>
+<li><p><strong>Returns</strong> – <p>[<cite>transformers.modeling_outputs.BaseModelOutputWithPooling</cite>] or <cite>tuple(torch.FloatTensor)</cite>: A [<cite>transformers.modeling_outputs.BaseModelOutputWithPooling</cite>] or a tuple of
+<cite>torch.FloatTensor</cite> (if <cite>return_dict=False</cite> is passed or when <cite>config.return_dict=False</cite>) comprising various
+elements depending on the configuration ([<cite>ViltConfig</cite>]) and inputs.</p>
+<ul>
+<li><p><strong>last_hidden_state</strong> (<cite>torch.FloatTensor</cite> of shape <cite>(batch_size, sequence_length, hidden_size)</cite>) – Sequence of hidden-states at the output of the last layer of the model.</p></li>
+<li><p><strong>pooler_output</strong> (<cite>torch.FloatTensor</cite> of shape <cite>(batch_size, hidden_size)</cite>) – Last layer hidden-state of the first token of the sequence (classification token) after further processing
+through the layers used for the auxiliary pretraining task. E.g. for BERT-family of models, this returns
+the classification token after processing through a linear layer and a tanh activation function. The linear
+layer weights are trained from the next sentence prediction (classification) objective during pretraining.</p></li>
+<li><p><strong>hidden_states</strong> (<cite>tuple(torch.FloatTensor)</cite>, <em>optional</em>, returned when <cite>output_hidden_states=True</cite> is passed or when <cite>config.output_hidden_states=True</cite>) – Tuple of <cite>torch.FloatTensor</cite> (one for the output of the embeddings, if the model has an embedding layer, +
+one for the output of each layer) of shape <cite>(batch_size, sequence_length, hidden_size)</cite>.</p>
+<p>Hidden-states of the model at the output of each layer plus the optional initial embedding outputs.</p>
+</li>
+<li><p><strong>attentions</strong> (<cite>tuple(torch.FloatTensor)</cite>, <em>optional</em>, returned when <cite>output_attentions=True</cite> is passed or when <cite>config.output_attentions=True</cite>) – Tuple of <cite>torch.FloatTensor</cite> (one for each layer) of shape <cite>(batch_size, num_heads, sequence_length,
+sequence_length)</cite>.</p>
+<p>Attentions weights after the attention softmax, used to compute the weighted average in the self-attention
+heads.</p>
+</li>
+</ul>
+</p></li>
+<li><p><strong>Examples</strong> – </p></li>
+<li><p><strong>```python</strong> – </p></li>
+<li><p><strong>ViltProcessor</strong> (<em>&gt;&gt;&gt; from transformers import</em>) – </p></li>
+<li><p><strong>ViltModel</strong> – </p></li>
+<li><p><strong>Image</strong> (<em>&gt;&gt;&gt; from PIL import</em>) – </p></li>
+<li><p><strong>requests</strong> (<em>&gt;&gt;&gt; import</em>) – </p></li>
+<li><p><strong>text</strong> (<em>&gt;&gt;&gt; # prepare image and</em>) – </p></li>
+<li><p><strong>&quot;http</strong> (<em>&gt;&gt;&gt; url =</em>) – //images.cocodataset.org/val2017/000000039769.jpg”</p></li>
+<li><p><strong>Image.open</strong> (<em>&gt;&gt;&gt; image =</em>) – </p></li>
+<li><p><strong>world&quot;</strong> (<em>&gt;&gt;&gt; text = &quot;hello</em>) – </p></li>
+<li><p><strong>ViltProcessor.from_pretrained</strong> (<em>&gt;&gt;&gt; processor =</em>) – </p></li>
+<li><p><strong>ViltModel.from_pretrained</strong> (<em>&gt;&gt;&gt; model =</em>) – </p></li>
+<li><p><strong>processor</strong> (<em>&gt;&gt;&gt; inputs =</em>) – </p></li>
+<li><p><strong>model</strong> (<em>&gt;&gt;&gt; outputs =</em>) – </p></li>
+<li><p><strong>outputs.last_hidden_state</strong> (<em>&gt;&gt;&gt; last_hidden_states =</em>) – </p></li>
+<li><p><strong>```</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="meerqat.models.qa.MultiPassageVilt">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">meerqat.models.qa.</span></span><span class="sig-name descname"><span class="pre">MultiPassageVilt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">add_pooling_layer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/meerqat/models/qa.html#MultiPassageVilt"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#meerqat.models.qa.MultiPassageVilt" title="Permalink to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ViltPreTrainedModel</span></code></p>
+<p>Like MultiPassageBERT with a ViLT backbone instead of BERT</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="meerqat.models.qa.MultiPassageVilt.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_ids</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_positions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_positions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">answer_mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_dict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/meerqat/models/qa.html#MultiPassageVilt.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#meerqat.models.qa.MultiPassageVilt.forward" title="Permalink to this definition">#</a></dt>
+<dd><p>Defines the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+                </article>
+              
+              
+              
+                <footer class="bd-footer-article">
+                  
+<div class="footer-article-items footer-article__inner">
+  
+    <div class="footer-article-item"><!-- Previous / next buttons -->
+<div class="prev-next-area">
+</div></div>
+  
+</div>
+
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+  <div class="sidebar-secondary-item">
+  <div class="tocsection sourcelink">
+    <a href="_sources/meerqat.models.qa.rst.txt">
+      <i class="fa-solid fa-file-lines"></i> Show Source
+    </a>
+  </div>
+</div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="_static/scripts/bootstrap.js?digest=e353d410970836974a52"></script>
+<script src="_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+  <p class="copyright">
+    
+      © Copyright 2020-2023, CNRS.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.0.2.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item"><p class="theme-version">
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.13.3.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

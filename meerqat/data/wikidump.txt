@@ -1,0 +1,145 @@
+==================================================================================================
+
+
+
+File wikidump.py được thiết kế để xử lý một bản dump (dữ liệu xuất ra) từ Wikimedia Commons,
+phân tích và thu thập các hình ảnh liên quan đến các thực thể trong tệp entities.json.
+Các hình ảnh được phân loại dựa trên các danh mục (categories) mà chúng thuộc về,
+sau đó được gán vào các thực thể tương ứng.
+
+Input: entities.json, chứa thông tin về các thực thể cần xử lý.
+Output: Cập nhật tệp entities.json với thông tin hình ảnh từ Wikimedia Commons,
+dựa trên các danh mục của hình ảnh và các thực thể có liên quan.
+
+
+
+==================================================================================================
+
+
+
+
+Các biến và hằng số quan trọng
+NAMESPACE:
+
+Chứa thông tin về không gian tên (namespace) XML để sử dụng khi tìm kiếm các phần tử trong tệp XML (Wikimedia dump).
+VALID_ENCODING:
+
+Một danh sách các định dạng tệp hình ảnh hợp lệ mà chương trình sẽ xử lý (được xác định trong wiki.py).
+Dùng để xác nhận rằng hình ảnh trong dump có định dạng hợp lệ.
+DATA_ROOT_PATH:
+
+Đường dẫn đến thư mục gốc chứa các tệp dữ liệu của dự án, bao gồm cả tệp entities.json và bản dump Wikimedia Commons.
+
+
+
+
+==================================================================================================
+
+
+
+
+
+Các hàm và tác dụng
+
+Hàm parse_file(path)
+Mục đích: Đọc và phân tích tệp dump Wikimedia Commons, hỗ trợ cả tệp nén .bz2 và tệp XML thông thường.
+
+Input:
+path: Đường dẫn đến tệp dump cần phân tích.
+
+Output:
+Trả về cây XML đã được phân tích.
+
+Chi tiết thực hiện: Dùng bz2.open nếu tệp có định dạng nén .bz2, sau đó sử dụng ElementTree.parse để phân tích cú pháp tệp.
+
+
+Hàm find(element, tag, namespace=NAMESPACE)
+Mục đích: Tìm kiếm một phần tử con trong cây XML với tag nhất định.
+
+Input:
+element: Phần tử XML gốc.
+tag: Tag XML cần tìm.
+namespace: Không gian tên (namespace) của XML.
+
+Output:
+Trả về phần tử con tìm được, hoặc None nếu không tìm thấy.
+Chi tiết thực hiện: Kiểm tra xem element có phải là None không trước khi tìm kiếm phần tử con với tag và namespace cho trước.
+
+
+Hàm find_text(element, tag, namespace=NAMESPACE)
+Mục đích: Tìm và trả về văn bản của một phần tử con trong cây XML.
+
+Input:
+element: Phần tử XML gốc.
+tag: Tag của phần tử con.
+namespace: Không gian tên của XML.
+
+Output:
+Trả về văn bản của phần tử con hoặc None nếu không tìm thấy.
+Chi tiết thực hiện: Sử dụng find để lấy phần tử con và trả về văn bản của nó.
+
+
+Hàm get_field(wikitext, image, field)
+Mục đích: Tìm kiếm và trích xuất thông tin từ wikitext của bài viết, chẳng hạn như ngày, tác giả, và mô tả.
+
+Input:
+wikitext: Nội dung wikitext của bài viết.
+image: Từ điển lưu trữ thông tin hình ảnh.
+field: Trường cần tìm (ví dụ: "Date" hoặc "Author").
+
+Output:
+Cập nhật từ điển image với giá trị trường tìm được.
+Chi tiết thực hiện: Sử dụng biểu thức chính quy để tìm kiếm và trích xuất giá trị của trường từ wikitext.
+
+
+Hàm process_article(article, entities, entity_categories)
+Mục đích: Xử lý một bài viết, trích xuất các thông tin liên quan đến hình ảnh và phân loại chúng theo danh mục.
+
+Input:
+article: Cây XML của bài viết cần xử lý.
+entities: Từ điển các thực thể.
+entity_categories: Tập hợp các danh mục của các thực thể cần xử lý.
+
+Output:
+Cập nhật từ điển entities với các hình ảnh liên quan.
+Chi tiết thực hiện: Trích xuất thông tin về danh mục, mô tả, tác giả, ngày tháng và bản quyền từ wikitext,
+và gán hình ảnh vào các thực thể có liên quan.
+
+
+Hàm process_articles(dump_path, entities)
+Mục đích: Xử lý tất cả các bài viết trong tệp dump, tìm kiếm và gán hình ảnh vào các thực thể tương ứng.
+
+Input:
+dump_path: Đường dẫn đến thư mục chứa các tệp dump.
+entities: Từ điển các thực thể.
+
+Output:
+Cập nhật từ điển entities với thông tin hình ảnh.
+Chi tiết thực hiện: Lặp qua tất cả các tệp XML trong thư mục dump, xử lý từng bài viết và cập nhật thực thể tương ứng.
+
+
+Hàm __main__
+Mục đích: Phân tích đối số dòng lệnh, tải dữ liệu thực thể từ tệp entities.json,
+xử lý dump Wikimedia Commons và lưu kết quả vào tệp entities.json.
+
+Chi tiết thực hiện:
+Phân tích đối số dòng lệnh để lấy tham số subset.
+Tải các thực thể từ tệp entities.json.
+Xử lý các bài viết từ tệp dump và cập nhật các thực thể với thông tin hình ảnh.
+Lưu kết quả vào tệp entities.json.
+In ra thống kê về số lượng hình ảnh thu thập được.
+
+
+
+
+==================================================================================================
+
+
+
+
+
+Các tác vụ chính trong if __name__ == '__main__':
+Phân tích đối số dòng lệnh: Dùng docopt để lấy tham số subset và xác định đường dẫn tệp entities.json cần xử lý.
+Cập nhật thực thể: Gọi hàm process_articles để xử lý dump Wikimedia Commons và cập nhật các thực thể với thông tin hình ảnh.
+Lưu kết quả: Sau khi xử lý xong, lưu kết quả vào tệp entities.json.
+Thống kê: In ra thống kê về số lượng hình ảnh đã được thu thập cho các thực thể.

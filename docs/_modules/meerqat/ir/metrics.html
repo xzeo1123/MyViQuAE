@@ -1,0 +1,810 @@
+
+
+<!DOCTYPE html>
+
+
+<html lang="en" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>meerqat.ir.metrics &#8212; meerqat v4.0.0-alpha documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../_static/styles/theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../../../_static/styles/bootstrap.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+
+  
+  <link href="../../../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=e353d410970836974a52" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=e353d410970836974a52" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52" />
+
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/meerqat/ir/metrics';</script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__primary"
+          id="__primary"/>
+  <label class="overlay overlay-primary" for="__primary"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__secondary"
+          id="__secondary"/>
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+  
+    <nav class="bd-header navbar navbar-expand-lg bd-navbar">
+<div class="bd-header__inner bd-page-width">
+  <label class="sidebar-toggle primary-toggle" for="__primary">
+    <span class="fa-solid fa-bars"></span>
+  </label>
+  
+  <div class="navbar-header-items__start">
+    
+      <div class="navbar-item">
+  
+
+<a class="navbar-brand logo" href="../../../index.html">
+  
+  
+  
+  
+  
+    <p class="title logo__title">meerqat v4.0.0-alpha documentation</p>
+  
+</a></div>
+    
+  </div>
+  
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item"><nav class="navbar-nav">
+  <p class="sidebar-header-items__title"
+     role="heading"
+     aria-level="1"
+     aria-label="Site Navigation">
+    Site Navigation
+  </p>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+  </button>
+`);
+</script>
+        </div>
+      
+      
+        <div class="navbar-item">
+<script>
+document.write(`
+  <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+  </button>
+`);
+</script></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+  </button>
+`);
+</script>
+    </div>
+  
+
+  
+</div>
+
+    </nav>
+  
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <div class="bd-sidebar-primary bd-sidebar hide-on-wide">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          <div class="navbar-item"><nav class="navbar-nav">
+  <p class="sidebar-header-items__title"
+     role="heading"
+     aria-level="1"
+     aria-label="Site Navigation">
+    Site Navigation
+  </p>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+  </ul>
+</nav></div>
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+<script>
+document.write(`
+  <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+  </button>
+`);
+</script></div>
+        
+      </div>
+    
+  </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+
+
+<nav aria-label="Breadcrumbs">
+  <ul class="bd-breadcrumbs" role="navigation" aria-label="Breadcrumb">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../../index.html" class="nav-link">Module code</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page">meerqat.ir.metrics</li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article" role="main">
+                  
+  <h1>Source code for meerqat.ir.metrics</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Script and functions related to metrics and ranx.</span>
+
+<span class="sd">(for docopt) Usage:</span>
+<span class="sd">metrics.py relevant &lt;dataset&gt; &lt;passages&gt; &lt;title2index&gt; [&lt;article2passage&gt; --reference=&lt;reference&gt; --save=&lt;save&gt; --disable_caching --provenance_key=&lt;key&gt;]</span>
+<span class="sd">metrics.py qrels &lt;qrels&gt;... --output=&lt;path&gt;</span>
+<span class="sd">metrics.py ranx --qrels=&lt;path&gt; [&lt;run&gt;... --output=&lt;path&gt; --filter=&lt;path&gt; --kwargs=&lt;path&gt; --cats=&lt;path&gt;]</span>
+<span class="sd">metrics.py (win|tie|loss) &lt;metrics&gt; [--metric=&lt;metric&gt;]</span>
+<span class="sd">                                  </span>
+<span class="sd">Usages:</span>
+<span class="sd">    1. metrics.py relevant &lt;dataset&gt; &lt;passages&gt; &lt;title2index&gt; [&lt;article2passage&gt; --reference=&lt;reference&gt; --save=&lt;save&gt; --disable_caching]    </span>
+<span class="sd">    2. metrics.py qrels &lt;qrels&gt;... --output=&lt;path&gt;    </span>
+<span class="sd">    3. metrics.py ranx --qrels=&lt;path&gt; [&lt;run&gt;... --output=&lt;path&gt; --filter=&lt;path&gt; --kwargs=&lt;path&gt; --cats=&lt;path&gt;]     </span>
+<span class="sd">    4. metrics.py (win|tie|loss) &lt;metrics&gt; [--metric=&lt;metric&gt;]  </span>
+<span class="sd">    </span>
+<span class="sd">Positional arguments:</span>
+<span class="sd">    * &lt;usage&gt;              Pick one usage.</span>
+<span class="sd">    * &lt;dataset&gt;            Path to the dataset  </span>
+<span class="sd">    * &lt;passages&gt;           Path to the passages (also a Dataset)</span>
+<span class="sd">    * &lt;title2index&gt;        Path to the JSON file mapping article’s title to it’s index in the KB</span>
+<span class="sd">    * [&lt;article2passage&gt;]  Path to the JSON file mapping article’s index to its corresponging passage indices. </span>
+<span class="sd">                           Optional, if not provided, we assume that &lt;passages&gt; is a collection of articles.</span>
+<span class="sd">    * &lt;qrels&gt;...           Paths to the Qrels to merge</span>
+<span class="sd">    * &lt;metrics&gt;            Path to the JSON metrics file (output of ranx)</span>
+
+<span class="sd">Options:</span>
+<span class="sd">    --reference=&lt;reference&gt; Name of the column that holds the text that should hold the answer. Defaults to &#39;passage&#39;.    </span>
+<span class="sd">    --save=&lt;save&gt;           Name of the column under which to save the relevant indices. Defaults to &#39;provenance_indices&#39;.</span>
+<span class="sd">    --provenance_key=&lt;key&gt;  Where are the provenance stored in item[&#39;output&#39;].</span>
+<span class="sd">                            Special values &#39;wikidata&#39; and &#39;wikipedia&#39; will use a single provenance article,</span>
+<span class="sd">                            the one from the subject-entity (stored in &#39;wikidata_id&#39; and &#39;wikipedia_title&#39;, respectively).</span>
+<span class="sd">                            If &#39;wikidata&#39;, title2index should actually be QID-to-index.</span>
+<span class="sd">                            Defaults to &#39;provenance&#39;.</span>
+<span class="sd">    --disable_caching       Disables Dataset caching (useless when using save_to_disk), see datasets.set_caching_enabled()</span>
+<span class="sd">    --output=&lt;path&gt;         1. qrels: output path to the JSON file</span>
+<span class="sd">                            2. ranx: output path to the directory where to save metrics</span>
+<span class="sd">    --filter=&lt;path&gt;         Path towards the JSON file that contains a list of question ids to filter *out*</span>
+<span class="sd">    --kwargs=&lt;path&gt;         Path towards the JSON config file that contains kwargs</span>
+<span class="sd">    --cats=&lt;path&gt;           Path towards the JSON that maps categories to their question ids</span>
+<span class="sd">    --metric=&lt;metric&gt;       Metric on which to compute wins/ties/losses [default: precision@1].                                                            </span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">docopt</span> <span class="kn">import</span> <span class="n">docopt</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">from</span> <span class="nn">tqdm</span> <span class="kn">import</span> <span class="n">tqdm</span>
+<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <span class="nn">datasets</span> <span class="kn">import</span> <span class="n">load_from_disk</span><span class="p">,</span> <span class="n">DatasetDict</span>
+<span class="kn">import</span> <span class="nn">ranx</span>
+
+<span class="kn">from</span> <span class="nn">..data.loading</span> <span class="kn">import</span> <span class="n">answer_preprocess</span>
+<span class="kn">from</span> <span class="nn">..data.infoseek</span> <span class="kn">import</span> <span class="n">find_numbers</span><span class="p">,</span> <span class="n">metric_numerical_range</span><span class="p">,</span> <span class="n">QuestionType</span>
+<span class="kn">from</span> <span class="nn">..data.utils</span> <span class="kn">import</span> <span class="n">json_integer_keys</span>
+
+
+<div class="viewcode-block" id="numerical_relevant"><a class="viewcode-back" href="../../../meerqat.ir.metrics.html#meerqat.ir.metrics.numerical_relevant">[docs]</a><span class="k">def</span> <span class="nf">numerical_relevant</span><span class="p">(</span><span class="n">answer</span><span class="p">,</span> <span class="n">passage</span><span class="p">):</span>
+    <span class="n">answer_range</span> <span class="o">=</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">answer</span><span class="p">]</span>
+    <span class="n">numerical_numbers</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">find_numbers</span><span class="p">(</span><span class="n">passage</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">number</span> <span class="ow">in</span> <span class="n">numerical_numbers</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">metric_numerical_range</span><span class="p">(</span><span class="n">number</span><span class="p">,</span> <span class="n">answer_range</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">return</span> <span class="kc">False</span></div>
+
+
+<div class="viewcode-block" id="find_valid_numerical_answers"><a class="viewcode-back" href="../../../meerqat.ir.metrics.html#meerqat.ir.metrics.find_valid_numerical_answers">[docs]</a><span class="k">def</span> <span class="nf">find_valid_numerical_answers</span><span class="p">(</span><span class="n">answer</span><span class="p">,</span> <span class="n">passages</span><span class="p">):</span>
+    <span class="n">valid_numerical_answers</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">answer_range</span> <span class="o">=</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">answer</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">passage</span> <span class="ow">in</span> <span class="n">passages</span><span class="p">:</span>
+        <span class="n">float_numbers</span><span class="p">,</span> <span class="n">str_numbers</span> <span class="o">=</span> <span class="n">find_numbers</span><span class="p">(</span><span class="n">passage</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">float_num</span><span class="p">,</span> <span class="n">str_num</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">float_numbers</span><span class="p">,</span> <span class="n">str_numbers</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">metric_numerical_range</span><span class="p">(</span><span class="n">float_num</span><span class="p">,</span> <span class="n">answer_range</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">valid_numerical_answers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">str_num</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">valid_numerical_answers</span></div>
+
+
+<div class="viewcode-block" id="find_relevant"><a class="viewcode-back" href="../../../meerqat.ir.metrics.html#meerqat.ir.metrics.find_relevant">[docs]</a><span class="k">def</span> <span class="nf">find_relevant</span><span class="p">(</span><span class="n">retrieved</span><span class="p">,</span> <span class="n">original_answer</span><span class="p">,</span> <span class="n">alternative_answers</span><span class="p">,</span> <span class="n">kb</span><span class="p">,</span> <span class="n">reference_key</span><span class="o">=</span><span class="s1">&#39;passage&#39;</span><span class="p">,</span> <span class="n">question_type</span><span class="o">=</span><span class="n">QuestionType</span><span class="o">.</span><span class="n">String</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    retrieved: List[int]</span>
+<span class="sd">    original_answer: str</span>
+<span class="sd">        Included in alternative_answers so original_relevant is included in relevant</span>
+<span class="sd">    alternative_answers: List[str]</span>
+<span class="sd">    kb: Dataset</span>
+<span class="sd">    reference_key: str, optional</span>
+<span class="sd">        Used to get the reference field in kb</span>
+<span class="sd">        Defaults to &#39;passage&#39;</span>
+<span class="sd">    question_type: QuestionType, optional</span>
+<span class="sd">        Relevant for InfoSeek. Defaults to String.</span>
+<span class="sd">        </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    original_relevant, relevant: List[int]</span>
+<span class="sd">        Included in retrieved</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">original_relevant</span><span class="p">,</span> <span class="n">relevant</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">retrieved</span><span class="p">:</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="n">question_type</span> <span class="o">==</span> <span class="n">QuestionType</span><span class="o">.</span><span class="n">Numerical</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">numerical_relevant</span><span class="p">(</span><span class="n">alternative_answers</span><span class="p">,</span> <span class="n">kb</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">reference_key</span><span class="p">]):</span>
+                <span class="n">original_relevant</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+                <span class="n">relevant</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+                <span class="k">continue</span>
+        
+        <span class="c1"># N. B. loading kb[reference_key] in-memory and passing a List[str]</span>
+        <span class="c1"># might not be so efficient because it requires to load the whole KB instead of a small retrieved subset</span>
+        <span class="n">passage</span> <span class="o">=</span> <span class="n">answer_preprocess</span><span class="p">(</span><span class="n">kb</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">reference_key</span><span class="p">])</span>
+
+        <span class="n">answer</span> <span class="o">=</span> <span class="n">answer_preprocess</span><span class="p">(</span><span class="n">original_answer</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">rf</span><span class="s1">&#39;\b</span><span class="si">{</span><span class="n">answer</span><span class="si">}</span><span class="s1">\b&#39;</span><span class="p">,</span> <span class="n">passage</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">original_relevant</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+            <span class="n">relevant</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+            <span class="k">continue</span>
+
+        <span class="k">for</span> <span class="n">answer</span> <span class="ow">in</span> <span class="n">alternative_answers</span><span class="p">:</span>
+            <span class="n">answer</span> <span class="o">=</span> <span class="n">answer_preprocess</span><span class="p">(</span><span class="n">answer</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">rf</span><span class="s1">&#39;\b</span><span class="si">{</span><span class="n">answer</span><span class="si">}</span><span class="s1">\b&#39;</span><span class="p">,</span> <span class="n">passage</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">relevant</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+                <span class="k">break</span>
+    <span class="k">return</span> <span class="n">original_relevant</span><span class="p">,</span> <span class="n">relevant</span></div>
+
+    
+<div class="viewcode-block" id="find_relevant_item"><a class="viewcode-back" href="../../../meerqat.ir.metrics.html#meerqat.ir.metrics.find_relevant_item">[docs]</a><span class="k">def</span> <span class="nf">find_relevant_item</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">passages</span><span class="p">,</span> <span class="n">title2index</span><span class="p">,</span> <span class="n">article2passage</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> 
+                       <span class="n">reference_key</span><span class="o">=</span><span class="s1">&#39;passage&#39;</span><span class="p">,</span> <span class="n">save_as</span><span class="o">=</span><span class="s1">&#39;provenance_indices&#39;</span><span class="p">,</span> 
+                       <span class="n">provenance_key</span><span class="o">=</span><span class="s1">&#39;provenance&#39;</span><span class="p">,</span> <span class="n">qrels</span><span class="o">=</span><span class="p">{}):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Applies ``find_relevant`` with passages of articles linked to the question.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    item: dict</span>
+<span class="sd">    passages: Dataset</span>
+<span class="sd">    title2index: dict[str, int]</span>
+<span class="sd">        Mapping article’s title to it’s index in the KB</span>
+<span class="sd">    article2passage: dict[int, List[int]], optional</span>
+<span class="sd">        Mapping article’s index to its corresponging passage indices</span>
+<span class="sd">        If None, we assume that passages is a collection of articles    </span>
+<span class="sd">    reference_key: str, optional</span>
+<span class="sd">        Used to get the reference field in kb</span>
+<span class="sd">        Defaults to &#39;passage&#39;</span>
+<span class="sd">    save_as: str, optional</span>
+<span class="sd">        Results will be saved under this name in the dataset, </span>
+<span class="sd">        with an &#39;original_answer_&#39; prefix for passages that contain the original answer</span>
+<span class="sd">        Defaults to &#39;provenance_indices&#39;</span>
+<span class="sd">    provenance_key: str, optional</span>
+<span class="sd">        Where are the provenance stored in item[&#39;output&#39;].</span>
+<span class="sd">        Special values &#39;wikidata&#39; and &#39;wikipedia&#39; will use a single provenance article,</span>
+<span class="sd">        the one from the subject-entity (stored in &#39;wikidata_id&#39; and &#39;wikipedia_title&#39;, respectively).</span>
+<span class="sd">        If &#39;wikidata&#39;, title2index should actually be QID-to-index.</span>
+<span class="sd">        Defaults to &#39;provenance&#39;.</span>
+<span class="sd">    qrels: dict</span>
+<span class="sd">        Stores relevant indices. Compatible with ranx.Qrels</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">provenance_key</span> <span class="o">==</span> <span class="s1">&#39;wikidata&#39;</span><span class="p">:</span>
+        <span class="n">titles</span> <span class="o">=</span> <span class="p">{</span><span class="n">item</span><span class="p">[</span><span class="s1">&#39;wikidata_id&#39;</span><span class="p">]}</span>
+    <span class="k">elif</span> <span class="n">provenance_key</span> <span class="o">==</span> <span class="s1">&#39;wikipedia&#39;</span><span class="p">:</span>
+        <span class="n">titles</span> <span class="o">=</span> <span class="p">{</span><span class="n">item</span><span class="p">[</span><span class="s1">&#39;wikipedia_title&#39;</span><span class="p">]}</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">titles</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">provenance</span><span class="p">[</span><span class="s1">&#39;title&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">provenance</span> <span class="ow">in</span> <span class="n">item</span><span class="p">[</span><span class="s1">&#39;output&#39;</span><span class="p">][</span><span class="n">provenance_key</span><span class="p">])</span>
+    <span class="n">original_relevant</span><span class="p">,</span> <span class="n">relevant</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">title</span> <span class="ow">in</span> <span class="n">titles</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">title</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">title2index</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">article_index</span> <span class="o">=</span> <span class="n">title2index</span><span class="p">[</span><span class="n">title</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">article2passage</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">passage_indices</span> <span class="o">=</span> <span class="p">[</span><span class="n">article_index</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">passage_indices</span> <span class="o">=</span> <span class="n">article2passage</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">article_index</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="n">o</span><span class="p">,</span> <span class="n">r</span> <span class="o">=</span> <span class="n">find_relevant</span><span class="p">(</span>
+            <span class="n">passage_indices</span><span class="p">,</span> 
+            <span class="n">item</span><span class="p">[</span><span class="s1">&#39;output&#39;</span><span class="p">][</span><span class="s1">&#39;original_answer&#39;</span><span class="p">],</span> 
+            <span class="n">item</span><span class="p">[</span><span class="s1">&#39;output&#39;</span><span class="p">][</span><span class="s1">&#39;answer&#39;</span><span class="p">],</span> 
+            <span class="n">passages</span><span class="p">,</span> 
+            <span class="n">reference_key</span><span class="o">=</span><span class="n">reference_key</span><span class="p">,</span>
+            <span class="n">question_type</span><span class="o">=</span><span class="n">QuestionType</span><span class="p">[</span><span class="n">item</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;question_type&#39;</span><span class="p">,</span> <span class="s1">&#39;String&#39;</span><span class="p">)]</span>
+        <span class="p">)</span>
+        <span class="n">original_relevant</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">o</span><span class="p">)</span>
+        <span class="n">relevant</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">r</span><span class="p">)</span>
+    <span class="n">item</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;original_answer_</span><span class="si">{</span><span class="n">save_as</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">original_relevant</span>
+    <span class="n">item</span><span class="p">[</span><span class="n">save_as</span><span class="p">]</span> <span class="o">=</span> <span class="n">relevant</span>
+    <span class="n">qrels</span><span class="p">[</span><span class="n">item</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">):</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">relevant</span><span class="p">}</span>
+    <span class="k">return</span> <span class="n">item</span></div>
+
+
+<div class="viewcode-block" id="find_relevant_dataset"><a class="viewcode-back" href="../../../meerqat.ir.metrics.html#meerqat.ir.metrics.find_relevant_dataset">[docs]</a><span class="k">def</span> <span class="nf">find_relevant_dataset</span><span class="p">(</span><span class="n">dataset_path</span><span class="p">,</span> <span class="n">save_as</span><span class="o">=</span><span class="s1">&#39;provenance_indices&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Loads dataset, maps it through find_relevant_item and saves it back.&quot;&quot;&quot;</span>
+    <span class="n">dataset</span> <span class="o">=</span> <span class="n">load_from_disk</span><span class="p">(</span><span class="n">dataset_path</span><span class="p">)</span>
+    <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;save_as&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">save_as</span>
+    <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;qrels&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">dataset</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">find_relevant_item</span><span class="p">,</span> <span class="n">fn_kwargs</span><span class="o">=</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="n">dataset</span><span class="o">.</span><span class="n">save_to_disk</span><span class="p">(</span><span class="n">dataset_path</span><span class="p">)</span>   
+    <span class="n">qrels</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;qrels&#39;</span><span class="p">]</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">DatasetDict</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">split</span><span class="p">,</span> <span class="n">subset</span> <span class="ow">in</span> <span class="n">dataset</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">qrel</span> <span class="o">=</span> <span class="n">ranx</span><span class="o">.</span><span class="n">Qrels</span><span class="p">({</span><span class="n">q_id</span><span class="p">:</span> <span class="n">qrels</span><span class="p">[</span><span class="n">q_id</span><span class="p">]</span> <span class="k">for</span> <span class="n">q_id</span> <span class="ow">in</span> <span class="n">subset</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]})</span>
+            <span class="n">qrel</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">dataset_path</span><span class="o">/</span><span class="n">split</span><span class="o">/</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">save_as</span><span class="si">}</span><span class="s2">.json&quot;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">qrels</span> <span class="o">=</span> <span class="n">ranx</span><span class="o">.</span><span class="n">Qrels</span><span class="p">(</span><span class="n">qrels</span><span class="p">)</span>
+        <span class="n">qrels</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">dataset_path</span><span class="o">/</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">save_as</span><span class="si">}</span><span class="s2">.json&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="fuse_qrels"><a class="viewcode-back" href="../../../meerqat.ir.metrics.html#meerqat.ir.metrics.fuse_qrels">[docs]</a><span class="k">def</span> <span class="nf">fuse_qrels</span><span class="p">(</span><span class="n">qrels_paths</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Loads all qrels in qrels_paths and unions them under a single Qrels.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    qrels_paths: List[str]</span>
+<span class="sd">    </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    fused_qrels: ranx.Qrels</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># nothing to fuse</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">qrels_paths</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">ranx</span><span class="o">.</span><span class="n">Qrels</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="n">qrels_paths</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">final_qrels</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">qrels_path</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="nb">enumerate</span><span class="p">(</span><span class="n">qrels_paths</span><span class="p">)):</span>
+        <span class="n">qrels</span> <span class="o">=</span> <span class="n">ranx</span><span class="o">.</span><span class="n">Qrels</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="n">qrels_path</span><span class="p">)</span><span class="o">.</span><span class="n">qrels</span>
+        <span class="k">for</span> <span class="n">q_id</span><span class="p">,</span> <span class="n">rels</span> <span class="ow">in</span> <span class="n">qrels</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">final_qrels</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">q_id</span><span class="p">,</span> <span class="p">{})</span>
+            <span class="k">for</span> <span class="n">doc_id</span><span class="p">,</span> <span class="n">score</span> <span class="ow">in</span> <span class="n">rels</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">doc_id</span> <span class="ow">in</span> <span class="n">final_qrels</span><span class="p">[</span><span class="n">q_id</span><span class="p">]</span> <span class="ow">and</span> <span class="n">final_qrels</span><span class="p">[</span><span class="n">q_id</span><span class="p">][</span><span class="n">doc_id</span><span class="p">]</span> <span class="o">!=</span> <span class="n">score</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">qrels_path</span><span class="si">}</span><span class="s2"> contradicts a prior Qrels (one of </span><span class="si">{</span><span class="n">qrels_paths</span><span class="p">[:</span><span class="n">i</span><span class="p">]</span><span class="si">}</span><span class="s2">).</span><span class="se">\n</span><span class="s2">&quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot;Got </span><span class="si">{</span><span class="n">score</span><span class="si">}</span><span class="s2"> and </span><span class="si">{</span><span class="n">final_qrels</span><span class="p">[</span><span class="n">q_id</span><span class="p">][</span><span class="n">doc_id</span><span class="p">]</span><span class="si">}</span><span class="s2"> &quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot;for question &#39;</span><span class="si">{</span><span class="n">q_id</span><span class="si">}</span><span class="s2">&#39; and document &#39;</span><span class="si">{</span><span class="n">doc_id</span><span class="si">}</span><span class="s2">&#39;&quot;</span>
+                    <span class="p">)</span>
+                <span class="n">final_qrels</span><span class="p">[</span><span class="n">q_id</span><span class="p">][</span><span class="n">doc_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">score</span>
+    <span class="k">return</span> <span class="n">ranx</span><span class="o">.</span><span class="n">Qrels</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">final_qrels</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="load_runs"><a class="viewcode-back" href="../../../meerqat.ir.metrics.html#meerqat.ir.metrics.load_runs">[docs]</a><span class="k">def</span> <span class="nf">load_runs</span><span class="p">(</span><span class="n">runs_paths</span><span class="o">=</span><span class="p">[],</span> <span class="n">runs_dict</span><span class="o">=</span><span class="p">{},</span> <span class="n">filter_q_ids</span><span class="o">=</span><span class="p">[]):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Loads runs from both run_paths and runs_dict. Eventually filters out some questions.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    runs_paths: List[str], optional</span>
+<span class="sd">    runs_dict: dict[str, str], optional</span>
+<span class="sd">        {name of the run: path of the run}</span>
+<span class="sd">    filter_q_ids: List[str]</span>
+<span class="sd">        Question identifiers to filter from the runs</span>
+<span class="sd">        </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    runs: List[ranx.Run]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">runs</span> <span class="o">=</span> <span class="p">[]</span>
+    
+    <span class="c1"># load runs from CLI</span>
+    <span class="k">for</span> <span class="n">run_path</span> <span class="ow">in</span> <span class="n">runs_paths</span><span class="p">:</span>
+        <span class="n">run</span> <span class="o">=</span> <span class="n">ranx</span><span class="o">.</span><span class="n">Run</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="n">run_path</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">run</span><span class="o">.</span><span class="n">name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">run</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">run_path</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">run</span><span class="o">.</span><span class="n">name</span> <span class="o">+=</span> <span class="n">run_path</span>
+        <span class="k">for</span> <span class="n">q_id</span> <span class="ow">in</span> <span class="n">filter_q_ids</span><span class="p">:</span>
+            <span class="n">run</span><span class="o">.</span><span class="n">run</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">q_id</span><span class="p">)</span>
+        <span class="n">runs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">run</span><span class="p">)</span>
+    
+    <span class="c1"># load runs from config file</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">run_path</span> <span class="ow">in</span> <span class="n">runs_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">run</span> <span class="o">=</span> <span class="n">ranx</span><span class="o">.</span><span class="n">Run</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="n">run_path</span><span class="p">)</span>
+        <span class="n">run</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="k">for</span> <span class="n">q_id</span> <span class="ow">in</span> <span class="n">filter_q_ids</span><span class="p">:</span>
+            <span class="n">run</span><span class="o">.</span><span class="n">run</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">q_id</span><span class="p">)</span>
+        <span class="n">runs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">run</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">runs</span></div>
+        
+
+<div class="viewcode-block" id="compare"><a class="viewcode-back" href="../../../meerqat.ir.metrics.html#meerqat.ir.metrics.compare">[docs]</a><span class="k">def</span> <span class="nf">compare</span><span class="p">(</span><span class="n">qrels_path</span><span class="p">,</span> <span class="n">runs_paths</span><span class="o">=</span><span class="p">[],</span> <span class="n">runs_dict</span><span class="o">=</span><span class="p">{},</span> <span class="n">output_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_q_ids</span><span class="o">=</span><span class="p">[],</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Loads Qrels and Runs, feed them to ranx.compare and save result.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    qrels_path: str</span>
+<span class="sd">    runs_paths: List[str], optional</span>
+<span class="sd">    runs_dict: dict[str, str], optional</span>
+<span class="sd">        {name of the run: path of the run}</span>
+<span class="sd">    output_path: str, optional</span>
+<span class="sd">        Path of the directory were to save output JSON and TeX files.</span>
+<span class="sd">        Defaults not to save (only print results)</span>
+<span class="sd">    filter_q_ids: List[str]</span>
+<span class="sd">        Question identifiers to filter from the Runs and Qrels</span>
+<span class="sd">    **kwargs:</span>
+<span class="sd">        Passed to ranx.compare</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">qrels</span> <span class="o">=</span> <span class="n">ranx</span><span class="o">.</span><span class="n">Qrels</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="n">qrels_path</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">q_id</span> <span class="ow">in</span> <span class="n">filter_q_ids</span><span class="p">:</span>
+        <span class="n">qrels</span><span class="o">.</span><span class="n">qrels</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">q_id</span><span class="p">)</span>
+    
+    <span class="n">runs</span> <span class="o">=</span> <span class="n">load_runs</span><span class="p">(</span><span class="n">runs_paths</span><span class="p">,</span> <span class="n">runs_dict</span><span class="o">=</span><span class="n">runs_dict</span><span class="p">,</span> <span class="n">filter_q_ids</span><span class="o">=</span><span class="n">filter_q_ids</span><span class="p">)</span>
+
+    <span class="n">report</span> <span class="o">=</span> <span class="n">ranx</span><span class="o">.</span><span class="n">compare</span><span class="p">(</span>
+        <span class="n">qrels</span><span class="p">,</span>
+        <span class="n">runs</span><span class="o">=</span><span class="n">runs</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span>
+    <span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">report</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">output_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">output_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">output_path</span><span class="p">)</span>
+        <span class="n">output_path</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">report</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">output_path</span> <span class="o">/</span> <span class="s2">&quot;metrics.json&quot;</span><span class="p">)</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">output_path</span> <span class="o">/</span> <span class="s2">&quot;metrics.tex&quot;</span><span class="p">,</span> <span class="s1">&#39;wt&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+            <span class="n">file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">report</span><span class="o">.</span><span class="n">to_latex</span><span class="p">())</span></div>
+
+
+<div class="viewcode-block" id="cat_breakdown"><a class="viewcode-back" href="../../../meerqat.ir.metrics.html#meerqat.ir.metrics.cat_breakdown">[docs]</a><span class="k">def</span> <span class="nf">cat_breakdown</span><span class="p">(</span><span class="n">qrels_path</span><span class="p">,</span> <span class="n">runs_paths</span><span class="p">,</span> <span class="n">cats</span><span class="p">,</span> <span class="n">runs_dict</span><span class="o">=</span><span class="p">{},</span> <span class="n">output_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> 
+                  <span class="n">filter_q_ids</span><span class="o">=</span><span class="p">[],</span> <span class="n">metrics</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;mrr&quot;</span><span class="p">]):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    qrels_path, runs_paths, runs_dict, output_path, filter_q_ids: </span>
+<span class="sd">        see ``compare``</span>
+<span class="sd">    cats: dict[str, List[str]]</span>
+<span class="sd">        {category: list of question identifiers that belong to it}</span>
+<span class="sd">    metrics: List[str], optional</span>
+<span class="sd">        Which metrics to compute</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">output_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">output_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">output_path</span><span class="p">)</span>
+        <span class="n">output_path</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        
+    <span class="n">qrels</span> <span class="o">=</span> <span class="n">ranx</span><span class="o">.</span><span class="n">Qrels</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="n">qrels_path</span><span class="p">)</span>    
+    <span class="n">runs</span> <span class="o">=</span> <span class="n">load_runs</span><span class="p">(</span><span class="n">runs_paths</span><span class="p">,</span> <span class="n">runs_dict</span><span class="o">=</span><span class="n">runs_dict</span><span class="p">)</span>
+    
+    <span class="c1"># break qrels by cat</span>
+    <span class="n">qrels_by_cat</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">cat</span><span class="p">,</span> <span class="n">q_ids</span> <span class="ow">in</span> <span class="n">cats</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">qrels_by_cat</span><span class="p">[</span><span class="n">cat</span><span class="p">]</span> <span class="o">=</span> <span class="n">ranx</span><span class="o">.</span><span class="n">Qrels</span><span class="p">({</span><span class="n">q_id</span><span class="p">:</span> <span class="n">qrels</span><span class="o">.</span><span class="n">qrels</span><span class="p">[</span><span class="n">q_id</span><span class="p">]</span> <span class="k">for</span> <span class="n">q_id</span> <span class="ow">in</span> <span class="n">q_ids</span><span class="p">})</span>
+    
+    <span class="c1"># break runs by cat</span>
+    <span class="n">runs_by_cat</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">run</span> <span class="ow">in</span> <span class="n">runs</span><span class="p">:</span>
+        <span class="n">run_by_cat</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">cat</span><span class="p">,</span> <span class="n">q_ids</span> <span class="ow">in</span> <span class="n">cats</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">run_by_cat</span><span class="p">[</span><span class="n">cat</span><span class="p">]</span> <span class="o">=</span> <span class="n">ranx</span><span class="o">.</span><span class="n">Run</span><span class="p">({</span><span class="n">q_id</span><span class="p">:</span> <span class="n">run</span><span class="o">.</span><span class="n">run</span><span class="p">[</span><span class="n">q_id</span><span class="p">]</span> <span class="k">for</span> <span class="n">q_id</span> <span class="ow">in</span> <span class="n">q_ids</span><span class="p">},</span> <span class="n">name</span><span class="o">=</span><span class="n">run</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="n">runs_by_cat</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">run_by_cat</span><span class="p">)</span>
+            
+    <span class="c1"># compute metrics for each cat</span>
+    <span class="k">for</span> <span class="n">metric</span> <span class="ow">in</span> <span class="n">metrics</span><span class="p">:</span>
+        <span class="n">metric_by_cat</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">cat</span><span class="p">,</span> <span class="n">qrels_of_cat</span> <span class="ow">in</span> <span class="n">qrels_by_cat</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">run_by_cat</span> <span class="ow">in</span> <span class="n">runs_by_cat</span><span class="p">:</span>
+                <span class="n">run</span> <span class="o">=</span> <span class="n">run_by_cat</span><span class="p">[</span><span class="n">cat</span><span class="p">]</span>
+                <span class="n">metric_by_cat</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">run</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="p">{})</span>
+                <span class="c1">#TODO use compare instead of evaluate and print report with stat test</span>
+                <span class="n">metric_by_cat</span><span class="p">[</span><span class="n">run</span><span class="o">.</span><span class="n">name</span><span class="p">][</span><span class="n">cat</span><span class="p">]</span> <span class="o">=</span> <span class="n">ranx</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">qrels_of_cat</span><span class="p">,</span> <span class="n">run</span><span class="p">,</span> <span class="n">metric</span><span class="p">)</span>
+        
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">metric_by_cat</span><span class="p">)</span>
+        <span class="n">means</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">T</span>
+        <span class="n">df</span><span class="p">[</span><span class="s1">&#39;macro-avg&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">means</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">metric</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">((</span><span class="n">df</span> <span class="o">*</span> <span class="mi">100</span><span class="p">)</span><span class="o">.</span><span class="n">to_latex</span><span class="p">(</span><span class="n">float_format</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">%.1f</span><span class="s1">&#39;</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">***********</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">output_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">output_path</span><span class="o">/</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">metric</span><span class="si">}</span><span class="s1">.csv&#39;</span><span class="p">)</span></div>
+    
+
+<div class="viewcode-block" id="get_wtl_table"><a class="viewcode-back" href="../../../meerqat.ir.metrics.html#meerqat.ir.metrics.get_wtl_table">[docs]</a><span class="k">def</span> <span class="nf">get_wtl_table</span><span class="p">(</span><span class="n">metrics</span><span class="p">,</span> <span class="n">wtl_key</span><span class="o">=</span><span class="s1">&#39;W&#39;</span><span class="p">,</span> <span class="n">wtl_metric</span><span class="o">=</span><span class="s1">&#39;precision@1&#39;</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Formats either the wins, ties, or losses of the models against each other</span>
+<span class="sd">    according to wtl_key in a pandas.DataFrame</span>
+<span class="sd">    </span>
+<span class="sd">    metrics: dict</span>
+<span class="sd">        loaded from the JSON output of ranx</span>
+<span class="sd">    wtl_key: str, optional</span>
+<span class="sd">        Whether to compute the win (&#39;W&#39;), tie (&#39;T&#39;), or loss (&#39;L&#39;)</span>
+<span class="sd">    wtl_metric: str, optional</span>
+<span class="sd">        What does it mean to win?</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;metrics&quot;</span><span class="p">,</span> <span class="s2">&quot;model_names&quot;</span><span class="p">,</span> <span class="s2">&quot;stat_test&quot;</span><span class="p">]:</span>
+        <span class="n">metrics</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">table</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">model</span><span class="p">,</span> <span class="n">metric</span> <span class="ow">in</span> <span class="n">metrics</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">table</span><span class="p">[</span><span class="n">model</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="n">model</span><span class="p">:</span><span class="mi">0</span><span class="p">}</span>
+        <span class="k">for</span> <span class="n">m2</span><span class="p">,</span> <span class="n">wtl</span> <span class="ow">in</span> <span class="n">metric</span><span class="p">[</span><span class="s1">&#39;win_tie_loss&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">table</span><span class="p">[</span><span class="n">model</span><span class="p">][</span><span class="n">m2</span><span class="p">]</span> <span class="o">=</span> <span class="n">wtl</span><span class="p">[</span><span class="n">wtl_metric</span><span class="p">][</span><span class="n">wtl_key</span><span class="p">]</span>    
+    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">table</span><span class="p">)</span><span class="o">.</span><span class="n">T</span></div>
+    
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="n">docopt</span><span class="p">(</span><span class="vm">__doc__</span><span class="p">)</span>
+    <span class="n">wtl_key</span> <span class="o">=</span> <span class="kc">None</span>
+    
+    <span class="k">if</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;relevant&#39;</span><span class="p">]:</span>
+        <span class="n">passages</span> <span class="o">=</span> <span class="n">load_from_disk</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;&lt;passages&gt;&#39;</span><span class="p">])</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;&lt;title2index&gt;&#39;</span><span class="p">],</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+            <span class="n">title2index</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;&lt;article2passage&gt;&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;&lt;article2passage&gt;&#39;</span><span class="p">],</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+                <span class="n">article2passage</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="n">object_hook</span><span class="o">=</span><span class="n">json_integer_keys</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">article2passage</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">reference_key</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;--reference&#39;</span><span class="p">]</span> <span class="k">if</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;--reference&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s1">&#39;passage&#39;</span>
+        <span class="n">passages</span> <span class="o">=</span> <span class="n">passages</span><span class="o">.</span><span class="n">remove_columns</span><span class="p">([</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">passages</span><span class="o">.</span><span class="n">column_names</span> <span class="k">if</span> <span class="n">c</span> <span class="o">!=</span> <span class="n">reference_key</span><span class="p">])</span>
+        <span class="n">save_as</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;--save&#39;</span><span class="p">]</span> <span class="k">if</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;--save&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s1">&#39;provenance_indices&#39;</span>
+        <span class="n">provenance_key</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;--provenance_key&#39;</span><span class="p">]</span> <span class="k">if</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;--provenance_key&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s1">&#39;provenance&#39;</span>
+        <span class="n">find_relevant_dataset</span><span class="p">(</span>
+            <span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;&lt;dataset&gt;&#39;</span><span class="p">]),</span> 
+            <span class="n">passages</span><span class="o">=</span><span class="n">passages</span><span class="p">,</span> 
+            <span class="n">title2index</span><span class="o">=</span><span class="n">title2index</span><span class="p">,</span> 
+            <span class="n">article2passage</span><span class="o">=</span><span class="n">article2passage</span><span class="p">,</span>
+            <span class="n">reference_key</span><span class="o">=</span><span class="n">reference_key</span><span class="p">,</span>
+            <span class="n">save_as</span><span class="o">=</span><span class="n">save_as</span><span class="p">,</span>
+            <span class="n">provenance_key</span><span class="o">=</span><span class="n">provenance_key</span>
+        <span class="p">)</span>
+    
+    <span class="k">elif</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;qrels&#39;</span><span class="p">]:</span>
+        <span class="n">qrels</span> <span class="o">=</span> <span class="n">fuse_qrels</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;&lt;qrels&gt;&#39;</span><span class="p">])</span>
+        <span class="n">qrels</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;--output&#39;</span><span class="p">])</span>
+        
+    <span class="k">elif</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;ranx&#39;</span><span class="p">]:</span>
+        <span class="c1"># usage: either cat_breakdown or compare</span>
+        <span class="k">if</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;--cats&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;--cats&#39;</span><span class="p">],</span> <span class="s1">&#39;rt&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+                <span class="n">cats</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">cats</span> <span class="o">=</span> <span class="kc">None</span>            
+        <span class="k">if</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;--filter&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;--filter&#39;</span><span class="p">],</span> <span class="s1">&#39;rt&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+                <span class="n">filter_q_ids</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">filter_q_ids</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;--kwargs&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;--kwargs&#39;</span><span class="p">],</span> <span class="s1">&#39;rt&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+                <span class="n">kwargs</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">metrics</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;mrr@100&quot;</span><span class="p">,</span> <span class="s2">&quot;precision@1&quot;</span><span class="p">,</span> <span class="s2">&quot;precision@20&quot;</span><span class="p">,</span> <span class="s2">&quot;hit_rate@20&quot;</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;&lt;run&gt;&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">runs_paths</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;&lt;run&gt;&#39;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">runs_paths</span> <span class="o">=</span> <span class="p">[]</span>        
+        <span class="k">if</span> <span class="n">cats</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">compare</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;--qrels&#39;</span><span class="p">],</span> <span class="n">runs_paths</span><span class="p">,</span> <span class="n">output_path</span><span class="o">=</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;--output&#39;</span><span class="p">],</span> 
+                    <span class="n">filter_q_ids</span><span class="o">=</span><span class="n">filter_q_ids</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>            
+            <span class="n">cat_breakdown</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;--qrels&#39;</span><span class="p">],</span> <span class="n">runs_paths</span><span class="p">,</span> <span class="n">output_path</span><span class="o">=</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;--output&#39;</span><span class="p">],</span> 
+                          <span class="n">cats</span><span class="o">=</span><span class="n">cats</span><span class="p">,</span> <span class="n">filter_q_ids</span><span class="o">=</span><span class="n">filter_q_ids</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+                    
+    <span class="k">elif</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;win&#39;</span><span class="p">]:</span>
+        <span class="n">wtl_key</span> <span class="o">=</span> <span class="s1">&#39;W&#39;</span>
+    <span class="k">elif</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;tie&#39;</span><span class="p">]:</span>
+        <span class="n">wtl_key</span> <span class="o">=</span> <span class="s1">&#39;T&#39;</span>
+    <span class="k">elif</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;loss&#39;</span><span class="p">]:</span>
+        <span class="n">wtl_key</span> <span class="o">=</span> <span class="s1">&#39;L&#39;</span>
+    <span class="k">if</span> <span class="n">wtl_key</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">metric</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;--metric&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">metric</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">metric</span> <span class="o">=</span> <span class="s1">&#39;precision@1&#39;</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;&lt;metrics&gt;&#39;</span><span class="p">],</span> <span class="s1">&#39;rt&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+            <span class="n">metrics</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+        <span class="n">wtl</span> <span class="o">=</span> <span class="n">get_wtl_table</span><span class="p">(</span><span class="n">metrics</span><span class="p">,</span> <span class="n">wtl_key</span><span class="o">=</span><span class="n">wtl_key</span><span class="p">,</span> <span class="n">wtl_metric</span><span class="o">=</span><span class="n">metric</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">wtl</span><span class="o">.</span><span class="n">to_latex</span><span class="p">())</span>
+
+</pre></div>
+
+                </article>
+              
+              
+              
+                <footer class="bd-footer-article">
+                  
+<div class="footer-article-items footer-article__inner">
+  
+    <div class="footer-article-item"><!-- Previous / next buttons -->
+<div class="prev-next-area">
+</div></div>
+  
+</div>
+
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../../_static/scripts/bootstrap.js?digest=e353d410970836974a52"></script>
+<script src="../../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+  <p class="copyright">
+    
+      © Copyright 2020-2023, CNRS.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.0.2.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item"><p class="theme-version">
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.13.3.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

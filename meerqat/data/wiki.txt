@@ -1,0 +1,224 @@
+==================================================================================================
+
+
+
+File wiki.py được sử dụng để xử lý, truy vấn và lọc các thực thể từ Wikidata và Wikimedia Commons,
+đặc biệt là những thực thể liên quan đến hình ảnh và mô tả. Nó có thể:
+
+Cập nhật các thực thể với dữ liệu từ Wikidata và Wikimedia Commons.
+Lọc thực thể theo các lớp hoặc thuộc tính.
+Truy vấn thông tin về nhãn nữ tính của các thực thể.
+Xử lý hình ảnh và các liên kết đến chúng trong các thực thể.
+Lưu trữ kết quả vào các tệp JSON để sử dụng trong các tác vụ tiếp theo.
+
+
+
+
+Các tác vụ chính trong if __name__ == '__main__':
+Phân tích đối số dòng lệnh: Dựa vào các tham số dòng lệnh (args), chương trình thực hiện các tác vụ khác nhau,
+chẳng hạn như cập nhật từ dữ liệu, tìm kiếm hình ảnh, lọc thực thể, hoặc truy vấn thông tin từ Wikimedia Commons hoặc Wikidata.
+Cập nhật và lọc thực thể: Tùy thuộc vào tham số dòng lệnh, chương trình có thể áp dụng các bước lọc,
+cập nhật dữ liệu từ các nguồn, và lưu kết quả vào tệp JSON.
+Lưu kết quả: Sau khi xử lý xong, kết quả được lưu vào tệp JSON.
+
+
+
+
+Usages:
+
+1. data entities:
+Input/Output:
+Input: File entities.json, kết quả từ script kilt2vqa.py count_entities.
+Output: File entities.json chứa nhiều thuộc tính cho các thực thể.
+Ý nghĩa:
+Lấy thông tin từ Wikidata để gán thêm thuộc tính cho thực thể.
+Ưu tiên chọn ảnh đại diện từ Wikidata dựa trên các thuộc tính:
+P18 - Ảnh chính.
+P154 - Logo.
+P41 - Quốc kỳ.
+P94 - Huy hiệu.
+P2425 - Huy chương.
+Ví dụ: Một thực thể như "Barack Obama" có thể lấy ảnh đại diện từ thuộc tính P18 hoặc ảnh logo nếu P18 không có.
+
+
+2. data feminine:
+Input/Output:
+Input: entities.json.
+Output: feminine_labels.json.
+Ý nghĩa:
+Gắn nhãn dạng "giống cái" (feminine) cho các lớp và nghề nghiệp của thực thể.
+Ứng dụng:
+Tạo dữ liệu hỗ trợ phân tích về giới tính hoặc ngữ nghĩa.
+
+
+3. data superclasses:
+
+Input/Output:
+Input: entities.json.
+Output: <n>_superclasses.json.
+Ý nghĩa:
+Truy xuất các siêu lớp (superclasses) của các thực thể lên đến n cấp. Nếu không chỉ định, truy xuất toàn bộ.
+Ứng dụng:
+Phân loại thực thể theo cây phân cấp, ví dụ: "Barack Obama" -> "Người" -> "Sinh vật".
+
+
+
+
+Depictions (optional)
+Đoạn này giới thiệu các bước liên quan đến ảnh mô tả thực thể:
+
+commons sparql depicts: Truy xuất tất cả ảnh trong Wikimedia Commons có mô tả thực thể.
+commons sparql depicted: Truy xuất tất cả thực thể được mô tả trong ảnh từ bước trước.
+data depicted:
+Gắn dữ liệu giống data entities, nhưng áp dụng cho tất cả thực thể được mô tả trong ảnh.
+Heuristic kiểm tra tính nổi bật:
+Nếu thực thể duy nhất thuộc lớp của nó: Nổi bật.
+Ví dụ:
+"Ảnh Barack Obama và Joe Biden" → Không nổi bật.
+"Ảnh Barack Obama và Tháp Eiffel" → Nổi bật.
+
+
+
+
+filter
+Mục tiêu:
+Lọc thực thể dựa trên:
+Lớp ("class").
+Ngày qua đời (nếu có).
+Giới tính (P21) hoặc nghề nghiệp (P106).
+Lưu ý: Bước này có thể làm mất dữ liệu nếu không cẩn thận.
+
+
+
+
+commons rest
+Chức năng:
+Thu thập ảnh và danh mục con từ Wikimedia Commons dựa trên danh mục gốc của thực thể.
+Khuyến cáo: Sử dụng với --max_images=0 và sử dụng wikidump.py để thu thập ảnh đầy đủ.
+
+
+
+
+commons heuristics
+Heuristic để xác định ảnh liên quan:
+categories: Tên thực thể phải xuất hiện trong tất cả danh mục của ảnh.
+description: Tên thực thể phải xuất hiện trong mô tả ảnh.
+title: Tên thực thể phải xuất hiện trong tiêu đề hoặc tên file ảnh.
+depictions: Ảnh được đánh dấu là "mô tả" thực thể.
+
+
+
+
+Options
+Danh sách tham số tùy chọn, giúp người dùng tinh chỉnh quy trình xử lý dữ liệu:
+
+--n=<n>: Số cấp siêu lớp.
+--max_images=<n>: Giới hạn số ảnh tải mỗi thực thể (mặc định: 1000).
+--max_categories=<n>: Giới hạn số danh mục tải mỗi thực thể (mặc định: 100).
+--superclass=<level>: Mức siêu lớp để lọc.
+--positive: Giữ các lớp trong concrete_entities hoặc có giới tính/nghề nghiệp.
+--negative: Lọc bỏ các lớp trong abstract_entities.
+
+
+
+==================================================================================================
+
+
+
+Các hằng số được định nghĩa
+
+WIKIDATA_COMPUTE_LIMIT = 60
+Giải thích: Đây là giới hạn thời gian xử lý cho mỗi client (tên người dùng và địa chỉ IP) mỗi phút khi sử dụng dịch vụ truy vấn Wikidata SPARQL.
+Mỗi client chỉ được phép gửi yêu cầu và nhận phản hồi trong vòng 60 giây mỗi phút.
+
+QID_URI_PREFIX = "http://www.wikidata.org/entity/"
+Giải thích: Đây là tiền tố URI cho các thực thể trong Wikidata. Ví dụ, Q5 (mã định danh của con người trong Wikidata)
+sẽ có URL là http://www.wikidata.org/entity/Q5.
+
+HUMAN = QID_URI_PREFIX + 'Q5'
+Giải thích: Đây là URI cho thực thể "Người" trong Wikidata. Q5 là mã số của "Người" trong Wikidata.
+
+SPECIAL_PATH_URI_PREFIX = "http://commons.wikimedia.org/wiki/Special:FilePath/"
+Giải thích: Đây là tiền tố URI cho việc truy cập đường dẫn đặc biệt tới các tệp trên Wikimedia Commons.
+
+SPECIAL_FILE_PATH_URI_PREFIX = SPECIAL_PATH_URI_PREFIX + "File:"
+Giải thích: Đây là tiền tố URI cho các tệp trong Wikimedia Commons, ví dụ: http://commons.wikimedia.org/wiki/Special:FilePath/File:Image.jpg.
+
+UPLOAD_URI_PREFIX = "http://upload.wikimedia.org/wikipedia/commons/"
+Giải thích: Đây là tiền tố URI cho các tệp đã được tải lên Wikimedia Commons.
+
+VALID_DATE_TYPE = 'http://www.w3.org/2001/XMLSchema#dateTime'
+Giải thích: Đây là kiểu dữ liệu được xác định trong W3C XML Schema để mô tả thời gian.
+Dùng để kiểm tra các giá trị thời gian hợp lệ từ Wikidata hoặc Wikimedia Commons.
+
+VALID_ENCODING = {"png", "jpg", "jpeg", "tiff", "gif", "svg", "tif", "pdf", "djvu"}
+Giải thích: Đây là tập hợp các định dạng ảnh được phép, có thể xử lý bởi thư viện PIL.Image
+(hoặc có thể chuyển đổi bằng các hình thu nhỏ của Wikimedia).
+
+EXTENSIONS_PRE_AND_SUFFIXES
+Giải thích: Đây là một dictionary chứa các tiền tố và hậu tố cho các loại tệp khác nhau (như .svg, .tif, .pdf, .djvu).
+Mục đích là để tạo các hình thu nhỏ (thumbnails) từ các định dạng này.
+Ví dụ: svg sẽ được chuyển đổi thành hình thu nhỏ .png.
+
+LICENSES
+Giải thích: là một dictionary (từ điển) chứa các quy tắc ưu tiên cho các loại giấy phép (licenses) của tệp hình ảnh hoặc tài liệu.
+Các giá trị trong từ điển này đại diện cho mức độ ưu tiên của các loại giấy phép, với giá trị càng cao thì mức độ ưu tiên càng lớn.
+
+WIKIDATA_QUERY
+Giải thích: Hằng số này chứa một truy vấn SPARQL được sử dụng để thu thập thông tin về các đối tượng (entities) từ Wikidata.
+Các thuộc tính cần truy vấn bao gồm hình ảnh, quốc kỳ, huy hiệu, logo, băng dịch vụ, giới tính, nghề nghiệp, ngày sinh,
+ngày chết, và các thuộc tính khác của các đối tượng.
+
+WIKIDATA_FEMININE_QUERY
+Giải thích: Truy vấn này được sử dụng để lấy các nhãn (labels) nữ tính của các đối tượng từ Wikidata, nếu có.
+Đây là một truy vấn SPARQL đơn giản, trả về nhãn nữ (female label) của các đối tượng mà có thuộc tính P2521 (liên kết với nhãn nữ).
+
+WIKIDATA_SUPERCLASSES_QUERY
+Giải thích: Truy vấn này được sử dụng để lấy các lớp cha (superclasses) của các lớp (classes) trong Wikidata.
+Truy vấn này có thể được dùng để truy vấn các lớp cha cấp cao hơn của các đối tượng.
+
+WIKIDATA_ENDPOINT
+Giải thích: Địa chỉ endpoint của Wikidata để thực hiện các truy vấn SPARQL.
+
+RESERVED_IMAGES
+Giải thích: Hằng số này định nghĩa một danh sách các thuộc tính được sử dụng đặc biệt liên quan đến hình ảnh trong dự án
+(có thể dùng để phân loại các trường hợp dữ liệu liên quan đến các loại hình ảnh cụ thể như hình ảnh, logo, quốc kỳ, huy hiệu, và băng dịch vụ).
+
+MULTIPLE_KEYS
+Giải thích: Hằng số này xác định một tập hợp các khóa (keys) mà các đối tượng có thể có nhiều giá trị (multi-valued keys). Các khóa này bao gồm:
+instanceof: Loại của đối tượng (ví dụ: người, tổ chức, vật thể).
+occupation: Nghề nghiệp của đối tượng.
+Các thuộc tính trong RESERVED_IMAGES (hình ảnh, logo, quốc kỳ, huy hiệu, băng dịch vụ).
+
+UNIQUE_KEYS
+Giải thích: Hằng số này định nghĩa các khóa (keys) mà mỗi đối tượng chỉ có một giá trị duy nhất
+
+COMMONS_SPARQL_QUERY
+Giải thích: Truy vấn SPARQL này được sử dụng để tìm các hình ảnh mô tả các đối tượng trong Wikidata, thông qua thuộc tính P180 (depicts).
+Truy vấn này trả về các thông tin như:
+depicted_entity: Đối tượng được mô tả.
+commons_entity: Đối tượng trong Wikimedia Commons.
+special_path: Đường dẫn đặc biệt tới hình ảnh.
+url: Liên kết đến hình ảnh.
+encoding: Định dạng mã hóa của hình ảnh (PNG, JPG, JPEG, TIFF, GIF).
+
+COMMONS_DEPICTED_ENTITIES_QUERY
+Giải thích: Truy vấn SPARQL này được sử dụng để tìm các đối tượng trong Wikidata mà hình ảnh của chúng có thể được tìm thấy trong
+Wikimedia Commons thông qua thuộc tính P180 (depicts).
+
+COMMONS_SPARQL_ENDPOINT
+Giải thích: Địa chỉ endpoint SPARQL để truy vấn dữ liệu từ Wikimedia Commons.
+Đây là địa chỉ API để thực hiện các truy vấn SPARQL cho dữ liệu hình ảnh trong Wikimedia Commons.
+
+COMMONS_REST_LIST
+Giải thích: Địa chỉ API REST để lấy danh sách các tệp tin (files) hoặc các danh mục con (sub-categories) trong một danh mục của Wikimedia Commons.
+
+COMMONS_REST_TITLE
+Giải thích: Địa chỉ API REST để truy vấn thông tin về các tệp tin trong Wikimedia Commons, bao gồm các danh mục, mô tả, và thông tin hình ảnh (URL, metadata).
+
+VALID_IMAGE_HEURISTICS
+Giải thích: Hằng số này định nghĩa các yếu tố (heuristics) dùng để xác định tính hợp lệ của một hình ảnh trong Wikimedia Commons, dựa trên các thuộc tính như:
+categories: Các danh mục của hình ảnh.
+description: Mô tả của hình ảnh.
+depictions: Các đối tượng được mô tả trong hình ảnh.
+title: Tiêu đề của hình ảnh.

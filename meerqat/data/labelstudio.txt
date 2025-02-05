@@ -1,0 +1,539 @@
+==================================================================================================
+
+
+Dùng để xử lý và thao tác với dữ liệu đầu ra từ Label Studio, một công cụ mã nguồn mở dùng để gán nhãn cho dữ liệu
+(ví dụ như phân loại hình ảnh, nhận diện đối tượng, trả lời câu hỏi dựa trên hình ảnh - VQA).
+File này chứa nhiều hàm để xử lý các kết quả từ Label Studio, bao gồm các tác vụ như lưu ảnh,
+gộp kết quả gán nhãn từ nhiều annotator, tính toán sự đồng thuận giữa các annotator, và một số tác vụ khác.
+
+
+Cách sử dụng script: Đây là phần tài liệu mô tả cách chạy script labelstudio.py từ dòng lệnh với các lệnh cụ thể:
+save images <path>...:
+Lệnh này lưu ảnh từ các file gán nhãn tại danh sách các đường dẫn <path>...
+
+merge <output> <path>...:
+Lệnh này gộp các file gán nhãn (danh sách <path>...) và lưu kết quả vào <output>.
+
+assign <output> <todo> <start> <end>:
+Lệnh này gán công việc từ file TODO (<todo>) vào khoảng từ <start> đến <end> và lưu kết quả vào <output>.
+
+Có thể thêm các tùy chọn:
+--overlap=<n>: Số lượng câu hỏi chồng lắp trong TODO (mặc định là 0).
+--zip: Chỉ định nén thư mục đầu ra.
+<config>...: Các file cấu hình bổ sung.
+
+agree <dataset> <agreements>:
+Lệnh này hợp nhất dữ liệu đầu ra của merge với các file bất đồng (<agreements>).
+
+
+
+==================================================================================================
+
+
+
+FUNCTION: load_completions(completions_path)
+
+
+
+1. Mục đích:
+Đọc và xử lý tệp JSON chứa các thông tin hoàn thành (completions) từ một đường dẫn cụ thể.
+
+2. Input:
+completions_path (str hoặc Path): Đường dẫn đến file JSON cần đọc.
+
+3. Output:
+Danh sách các đối tượng JSON được tải từ file.
+
+4. Giải thích code:
+Sử dụng thư viện Path để chuẩn hóa đường dẫn.
+Mở file JSON tại đường dẫn được cung cấp và nạp nội dung vào một biến completions.
+Nếu nội dung không phải danh sách, nó được bọc trong một danh sách để đảm bảo đầu ra luôn là dạng danh sách.
+
+5. Ví dụ minh họa:
+Đầu vào:
+Tệp completions.json với nội dung:
+{"id": 1, "annotation": "label_1"}
+
+Đầu ra:
+[{"id": 1, "annotation": "label_1"}]
+
+
+
+==================================================================================================
+
+
+
+FUNCTION: save_images(completions_paths)
+
+
+
+1. Mục đích:
+Lưu hình ảnh từ danh sách các tệp gán nhãn (completions) và ghi lại thống kê số lượng hình ảnh được xử lý.
+
+2. Input:
+completions_paths (list[str] hoặc list[Path]): Danh sách đường dẫn đến các tệp JSON chứa thông tin gán nhãn.
+
+3. Output:
+Hình ảnh được tải và lưu tại thư mục COMMONS_PATH.
+Bảng thống kê hiển thị số lượng hình ảnh đã xử lý.
+
+4. Giải thích code:
+Tạo thư mục COMMONS_PATH nếu chưa tồn tại.
+Duyệt qua từng đường dẫn trong completions_paths và sử dụng hàm load_completions để tải dữ liệu.
+Với mỗi completion:
+Gọi hàm retrieve_vqa để lấy dữ liệu liên quan đến hình ảnh.
+Nếu hình ảnh bị gắn nhãn "discard", cập nhật bộ đếm counter và bỏ qua hình ảnh đó.
+Nếu không, gọi hàm save_image để lưu hình ảnh và tăng bộ đếm counter['ok'].
+Hiển thị bảng thống kê số lượng hình ảnh đã xử lý bằng tabulate.
+
+5. Ví dụ minh họa:
+Đầu vào:
+completions_paths = ['completion1.json', 'completion2.json']
+Tệp completion1.json:
+[{"image": "image1.jpg", "discard": null}, {"image": "image2.jpg", "discard": "duplicate"}]
+
+Đầu ra:
+Các hình ảnh như image1.jpg được lưu vào thư mục COMMONS_PATH.
+Bảng thống kê:
++------+-----+
+|   ok |   1 |
+|   duplicate |   1 |
++------+-----+
+
+
+
+==================================================================================================
+
+
+
+FUNCTION: merge(output_path, completions_paths)
+
+
+
+1. Mục đích:
+Gộp các file gán nhãn từ nhiều annotator thành một tập dữ liệu thống nhất.
+Tính toán và lưu các bất đồng (disagreements) giữa các annotator.
+
+2. Input:
+output_path (str hoặc Path): Đường dẫn lưu tập dữ liệu đã gộp.
+completions_paths (list[str] hoặc list[Path]): Danh sách đường dẫn đến các tệp JSON cần gộp.
+
+3. Output:
+Tập dữ liệu đã gộp được lưu tại output_path.
+Tệp JSON chứa bất đồng giữa các annotator được lưu kèm theo.
+
+4. Giải thích code:
+Tạo thanh tiến trình để hiển thị trạng thái xử lý.
+Tải và duyệt qua từng completion trong các đường dẫn được cung cấp.
+Lấy dữ liệu vqa từ retrieve_vqa và nhóm các mục có cùng meerqat_id trong một từ điển dataset.
+Gọi hàm annotator_agreement để tính toán sự đồng thuận và bất đồng giữa các annotator.
+Lưu dữ liệu đã gộp và các bất đồng vào các tệp tương ứng.
+
+5. Ví dụ minh họa:
+Đầu vào:
+completions_paths = ['completion1.json', 'completion2.json']
+output_path = 'merged_dataset.json'
+Tệp completion1.json:
+[{"meerqat_id": "1", "annotation": "A"}, {"meerqat_id": "2", "annotation": "B"}]
+
+Tệp completion2.json:
+[{"meerqat_id": "1", "annotation": "A"}, {"meerqat_id": "2", "annotation": "C"}]
+
+Đầu ra:
+merged_dataset.json:
+{
+    "1": [{"meerqat_id": "1", "annotation": "A"}, {"meerqat_id": "1", "annotation": "A"}],
+    "2": [{"meerqat_id": "2", "annotation": "B"}, {"meerqat_id": "2", "annotation": "C"}]
+}
+
+merged_dataset-disagreements.json:
+{"2": ["B", "C"]}
+
+
+
+==================================================================================================
+
+
+
+FUNCTION: annotator_agreement(dataset)
+
+
+
+1. Mục đích:
+Tính toán mức độ đồng thuận giữa các annotator về các câu hỏi và gán nhãn.
+Ghi nhận các câu hỏi mà annotators không đồng ý về việc loại bỏ hoặc chỉnh sửa.
+Nếu có thể, tính chỉ số Fleiss' Kappa để đo lường mức độ đồng thuận giữa các annotator.
+
+2. Input:
+dataset: Tập dữ liệu dạng dictionary, trong đó:
+Key là meerqat_id (ID của câu hỏi).
+Value là danh sách các gán nhãn (annotations) từ nhiều annotator.
+
+3. Output:
+disagreements: Một dictionary chứa các câu hỏi mà annotators không đồng thuận, kèm thông tin về mức độ đồng thuận và các gán nhãn tương ứng.
+
+4. Giải thích code:
+(a) Khởi tạo các biến:
+disagreements: Lưu trữ các câu hỏi mà annotators không đồng thuận.
+counter: Đếm tổng số câu hỏi, số câu có nhiều annotator, và số câu đồng thuận ở các tiêu chí.
+ns và Ps: Lưu trữ thông tin để tính toán chỉ số Fleiss' Kappa:
+ns: Số lượng annotators gán nhãn cho mỗi câu hỏi ở từng tiêu chí.
+Ps: Mức độ đồng thuận từng câu hỏi (số cặp annotator đồng ý).
+
+(b) Duyệt qua từng câu hỏi trong tập dữ liệu:
+Kiểm tra số lượng annotator:
+Nếu chỉ có 1 annotator, bỏ qua câu hỏi.
+Kiểm tra tính đồng nhất của số lượng annotator giữa các câu hỏi. Nếu không đồng nhất, dừng việc tính Fleiss' Kappa.
+
+Xác định các tiêu chí đồng thuận:
+binary_discard: Annotator có gán nhãn câu hỏi này bị loại bỏ không.
+binary_change_question: Annotator có thay đổi nội dung câu hỏi không.
+binary_change_image: Annotator có thay đổi hình ảnh không.
+
+Cập nhật thông tin:
+Đếm số annotator đồng thuận ở từng tiêu chí.
+Nếu tất cả annotator đồng ý (đồng thuận hoàn toàn), tăng counter[category].
+Nếu không đồng thuận, thêm câu hỏi vào disagreements.
+
+(c) Tính Fleiss' Kappa (nếu có thể):
+Tính các giá trị cần thiết:
+ps: Tỷ lệ tổng thể của các gán nhãn trong từng tiêu chí.
+P_bar_es: Trung bình bình phương tỷ lệ ps.
+P_bars: Trung bình của mức độ đồng thuận từng câu hỏi.
+Tính chỉ số Fleiss' Kappa:
+k = ( Pbars - Pbar_es ) / ( 1 - Pbar_es)
+
+Hiển thị kết quả và thống kê.
+
+(d) Trả về kết quả:
+In thống kê:
+Số câu hỏi có nhiều annotator.
+Tỷ lệ đồng thuận ở từng tiêu chí.
+Fleiss' Kappa (nếu tính được).
+
+Trả về disagreements.
+
+5. Ví dụ minh họa:
+Đầu vào:
+dataset = {
+    "1": [
+        {"meerqat_id": "1", "discard": None, "vq": "What is X?", "old_vq": "What is X?", "image": "img1.jpg", "old_image": "img1.jpg"},
+        {"meerqat_id": "1", "discard": True, "vq": "What is X?", "old_vq": "What is X?", "image": "img1.jpg", "old_image": "img1.jpg"}
+    ],
+    "2": [
+        {"meerqat_id": "2", "discard": None, "vq": "What is Y?", "old_vq": "What is Y?", "image": "img2.jpg", "old_image": "img2.jpg"},
+        {"meerqat_id": "2", "discard": None, "vq": "What is Y?", "old_vq": "What is Z?", "image": "img2.jpg", "old_image": "img3.jpg"}
+    ]
+}
+
+Đầu ra:
+
+In thống kê:
+found 2 questions with at least 2 annotators over 2 questions
++----------------------+-----+
+|                    / | agreements count |
++----------------------+-----+
+|         total       |  2  |
+| multiple_annotators |  2  |
+|    binary_discard   |  1  |
+| binary_change_question |  1 |
+| binary_change_image |  0  |
++----------------------+-----+
+
+Fleiss' Kappa:
++----------------------+-----+
+|         /            | Fleiss' Kappa |
++----------------------+-----+
+|    binary_discard    |  0.50 |
+| binary_change_question |  0.33 |
+| binary_change_image |  0.00 |
++----------------------+-----+
+
+Disagreements:
+{
+  "1": {
+    "vqas": [
+      {"meerqat_id": "1", "discard": null, "vq": "What is X?", "old_vq": "What is X?", "image": "img1.jpg", "old_image": "img1.jpg"},
+      {"meerqat_id": "1", "discard": true, "vq": "What is X?", "old_vq": "What is X?", "image": "img1.jpg", "old_image": "img1.jpg"}
+    ],
+    "annotator_agreement": {
+      "binary_discard": {true: 1, false: 1},
+      "binary_change_question": {true: 1},
+      "binary_change_image": {true: 1}
+    }
+  }
+}
+
+
+
+==================================================================================================
+
+
+
+FUNCTION: retrieve_vqa(completion)
+
+
+
+1. Mục đích:
+Trích xuất và chuẩn hóa dữ liệu từ một đối tượng completion của Label Studio,
+tạo ra một dictionary với các thông tin cần thiết từ annotation.
+
+2. Input:
+completion: Một dictionary chứa thông tin từ một kết quả trong Label Studio, bao gồm các dữ liệu như câu hỏi, hình ảnh, câu trả lời, ID, kết quả annotation, v.v.
+
+3. Output:
+Trả về một dictionary vqa, bao gồm thông tin về câu hỏi, hình ảnh, câu trả lời, các thay đổi của câu hỏi/hình ảnh, và các thông tin liên quan khác.
+
+4. Giải thích code:
+Trích xuất kết quả annotation:
+Kiểm tra xem completion có chứa completions hay annotations.
+Tạo một dictionary vqa chứa các thông tin ban đầu (câu hỏi, câu trả lời, hình ảnh, ID...).
+
+Xử lý các kết quả từ annotation:
+Duyệt qua từng kết quả và cập nhật vào vqa với các giá trị thích hợp.
+Đặc biệt là xử lý trường hợp khi giá trị của câu hỏi (vq) có thể không đồng nhất giữa các annotator.
+
+Cập nhật hình ảnh nếu có thay đổi:
+Nếu có thay đổi hình ảnh (dựa trên key change_image), cập nhật lại trường image trong vqa.
+
+Xử lý trường hợp người dùng bỏ qua hoặc hủy task:
+Nếu task bị hủy mà không chọn lý do, gán trường discard là 'cancelled'.
+
+5. Ví dụ minh họa:
+Đầu vào:
+completion = {
+    "completions": [{
+        "result": [{"from_name": "vq", "value": {"text": "What is X?"}}],
+        "data": {"question": "What is X?", "answer": "Answer A", "image": "img.jpg", "meerqat_id": "1", "vq": "What is Y?", "wikidata_id": "Q123"}
+    }]
+}
+
+Đầu ra:
+vqa = {
+    "question": "What is X?",
+    "wikidata_id": "Q123",
+    "answer": "Answer A",
+    "image": "img.jpg",
+    "meerqat_id": "1",
+    "old_vq": "What is Y?",
+    "old_image": "img.jpg",
+    "vq": "What is X?",
+    "change_image": None,
+    "discard": None
+}
+
+
+
+==================================================================================================
+
+
+
+FUNCTION: assign_annotations(todo, start, end, overlap=0)
+
+
+
+1. Mục đích:
+Gán các annotations từ một danh sách các công việc chưa hoàn thành (todo) cho một phạm vi nhất định.
+
+2. Input:
+todo: Một dictionary chứa các công việc chưa hoàn thành cần gán.
+start: Vị trí bắt đầu gán công việc.
+end: Vị trí kết thúc gán công việc.
+overlap: Số công việc sẽ được gán cho cả hai phạm vi (bắt đầu và kết thúc).
+
+3. Output:
+Một dictionary chứa các công việc đã được gán (assigned).
+
+4. Giải thích code:
+Gán công việc:
+Duyệt qua các công việc từ start đến end (với điều kiện là overlap), và gán mỗi công việc cho dictionary assigned.
+Lưu ý rằng i phải được chuyển thành chuỗi trước khi truy cập vào dictionary todo.
+
+5. Ví dụ minh họa:
+Đầu vào:
+todo = {"1": "task1", "2": "task2", "3": "task3", "4": "task4"}
+start = 1
+end = 3
+overlap = 0
+
+Đầu ra:
+assigned = {"1": "task1", "2": "task2"}
+
+
+
+==================================================================================================
+
+
+
+FUNCTION: assign(output_path, todo_path, start, end, overlap=0, zip=False, configs=[])
+
+
+
+1. Mục đích:
+Gán các công việc từ todo vào phạm vi chỉ định, lưu kết quả vào thư mục đầu ra, và cập nhật lại todo.
+
+2. Input:
+output_path: Đường dẫn thư mục để lưu kết quả.
+todo_path: Đường dẫn đến file chứa danh sách các công việc chưa hoàn thành.
+start, end: Phạm vi công việc cần gán.
+overlap: Số công việc trùng lặp giữa hai phạm vi.
+zip: Boolean, nếu là True sẽ nén kết quả vào một file zip.
+configs: Các cấu hình bổ sung cần sao chép vào thư mục kết quả.
+
+3. Output:
+Lưu kết quả vào thư mục output_path và cập nhật file tasks.json.
+
+4. Giải thích code:
+Đọc file và gán công việc:
+Đọc file todo_path và sử dụng hàm assign_annotations để gán các công việc.
+Lưu kết quả vào thư mục output_path dưới dạng file tasks.json.
+
+Sao chép cấu hình:
+Sao chép các file cấu hình từ configs vào thư mục đầu ra.
+
+Nén dữ liệu (nếu yêu cầu):
+Nếu zip là True, nén thư mục đầu ra thành file .zip.
+
+5. Ví dụ minh họa:
+Đầu vào:
+output_path = Path("output")
+todo_path = "todo.json"
+start = 1
+end = 3
+overlap = 0
+zip = True
+configs = ["config1.json", "config2.json"]
+
+Đầu ra:
+File tasks.json được tạo trong thư mục output.
+Thư mục output được nén thành output.zip.
+
+
+
+==================================================================================================
+
+
+
+FUNCTION: agree(dataset_path, agreements_path)
+
+
+
+1. Mục đích:
+Thống nhất các gán nhãn từ nhiều annotators, lưu kết quả cuối cùng vào file.
+
+2. Input:
+dataset_path: Đường dẫn đến dataset gốc.
+agreements_path: Đường dẫn đến file chứa các đồng thuận từ các annotators.
+
+3. Output:
+Lưu dataset cuối cùng vào file JSON, với các câu hỏi đã được thống nhất.
+
+4. Giải thích code:
+Đọc các file:
+Đọc dữ liệu từ dataset_path và agreements_path.
+
+Kết hợp dữ liệu:
+Duyệt qua từng meerqat_id trong dataset gốc, chọn giá trị từ agreements nếu có.
+
+Lưu kết quả:
+Lưu dataset đã thống nhất vào một file JSON mới.
+
+5. Ví dụ minh họa:
+Đầu vào:
+dataset_path: "dataset.json"
+agreements_path: "agreements.json"
+
+Đầu ra:
+Lưu dataset thống nhất vào file dataset-agreed.json.
+
+
+
+==================================================================================================
+
+
+
+MAIN
+
+
+
+python script.py <mode> <dataset> [options]
+<mode>: Lựa chọn tác vụ bạn muốn thực hiện (ví dụ: save, merge, assign, agree).
+<dataset>: Tên tập dữ liệu bạn muốn xử lý (ví dụ: validation_triviaqa).
+Tùy chọn ([options]): Các tham số bổ sung cho từng chế độ.
+
+
+a. Chế độ save
+Mục đích: Lưu hình ảnh từ các completions (hoàn thành).
+
+Lệnh chạy:
+python script.py save <path_to_completions> --images
+Ý nghĩa lệnh:
+
+save: Chọn chế độ để lưu dữ liệu.
+<path_to_completions>: Đường dẫn đến tập tin chứa kết quả completions.
+--images: Lựa chọn lưu hình ảnh từ các completions.
+
+
+b. Chế độ merge
+Mục đích: Hợp nhất dữ liệu từ nhiều completions thành một tập dữ liệu.
+
+Lệnh chạy:
+python script.py merge <path_to_completions> --output <output_path>
+Ý nghĩa lệnh:
+
+merge: Chế độ hợp nhất dữ liệu.
+<path_to_completions>: Đường dẫn đến dữ liệu completions.
+--output <output_path>: Đường dẫn nơi kết quả hợp nhất sẽ được lưu.
+
+
+c. Chế độ assign
+Mục đích: Gán công việc từ danh sách todo vào các phạm vi cụ thể.
+
+Lệnh chạy:
+python script.py assign <path_to_completions> <todo_path> --output <output_path> --start 0 --end 100 --overlap 5 --zip --config config1.json
+Ý nghĩa lệnh:
+
+assign: Chế độ gán công việc.
+<path_to_completions>: Đường dẫn đến file chứa completions.
+<todo_path>: Đường dẫn tới danh sách các công việc chưa hoàn thành.
+--output <output_path>: Đường dẫn nơi kết quả gán công việc sẽ được lưu.
+--start <start> và --end <end>: Phạm vi các công việc cần xử lý (từ start đến end).
+--overlap <overlap>: Số lượng công việc có thể bị trùng lặp.
+--zip: Nếu có, các kết quả sẽ được nén vào file .zip.
+--config <config1.json>: Cấu hình bổ sung cần sao chép vào thư mục kết quả.
+
+
+d. Chế độ agree
+Mục đích: Thống nhất kết quả giữa các annotators (người gán nhãn).
+
+Lệnh chạy:
+python script.py agree <dataset_path> <agreements_path>
+Ý nghĩa lệnh:
+
+agree: Chế độ thống nhất kết quả.
+<dataset_path>: Đường dẫn đến tập dữ liệu gốc.
+<agreements_path>: Đường dẫn tới các thỏa thuận giữa các annotators.
+
+
+
+Quy trình ví dụ đầy đủ:
+Lưu hình ảnh:
+python script.py save /path/to/completions --images
+Lệnh này sẽ lưu tất cả các hình ảnh từ các completions vào thư mục được chỉ định.
+
+Hợp nhất dữ liệu:
+python script.py merge /path/to/completions --output /path/to/output
+Hợp nhất tất cả các completions vào thư mục /path/to/output.
+
+Gán công việc:
+python script.py assign /path/to/completions /path/to/todo --output /path/to/output --start 0 --end 100 --overlap 5 --zip --config config1.json
+Gán công việc từ file todo vào phạm vi từ 0 đến 100 và cho phép tối đa 5 công việc trùng lặp.
+
+Thống nhất kết quả:
+python script.py agree /path/to/dataset /path/to/agreements
+Thống nhất kết quả từ các annotators trong tập dữ liệu được chỉ định.
+
+Lưu ý:
+Trước khi chạy các lệnh, hãy đảm bảo rằng các tệp dữ liệu như completions, todo, và các cấu hình như config1.json đã sẵn sàng.
+Các chế độ như save, merge, assign, và agree yêu cầu các hàm tương ứng (save_images, merge, assign_annotations, agree) phải được triển khai sẵn trong mã nguồn.
+Đảm bảo kiểm tra quyền truy cập và đường dẫn lưu trữ các tệp đầu ra (output_path).

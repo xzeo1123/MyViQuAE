@@ -1,0 +1,82 @@
+File utils.py chứa các hàm tiện ích (utility functions) để hỗ trợ các tác vụ phổ biến trong dự án.
+Các hàm này không phụ thuộc vào logic chính của dự án mà cung cấp các công cụ hỗ trợ như tính toán hàm băm,
+xử lý dữ liệu hoặc chuyển đổi định dạng. Dưới đây là chi tiết về từng phần.
+
+
+
+
+Hàm md5(string: str) -> str
+
+
+Chức năng:
+Tính toán hàm băm MD5 cho một chuỗi đầu vào.
+MD5 là một thuật toán băm mật mã học, thường được dùng để kiểm tra tính toàn vẹn của dữ liệu.
+
+Input:
+string (kiểu str): Chuỗi cần tính toán MD5.
+
+Output:
+Chuỗi đã băm (kiểu str): Kết quả là một chuỗi 32 ký tự hex (hệ cơ số 16).
+
+Hoạt động:
+Mã hóa chuỗi thành bytes với utf-8.
+Tính toán MD5 bằng hashlib.md5.
+Chuyển kết quả hash sang chuỗi hex với hexdigest.
+
+Ví dụ:
+md5("hello")  # Kết quả: "5d41402abc4b2a76b9719d911017c592"
+
+
+
+
+Hàm json_integer_keys(dictionary)
+Chức năng:
+Chuyển đổi tất cả các khóa (keys) trong một dictionary thành kiểu int.
+
+Input:
+dictionary (kiểu dict): Một dictionary có các khóa là chuỗi có thể chuyển đổi sang số nguyên (integer).
+
+Output:
+Dictionary mới với các khóa được chuyển sang kiểu số nguyên (int).
+
+Hoạt động:
+Duyệt qua các cặp khóa-giá trị (k, v) trong dictionary.
+Chuyển đổi khóa k thành kiểu int và giữ nguyên giá trị v.
+
+Lưu ý:
+Tất cả các khóa phải có khả năng chuyển đổi thành số nguyên và phải là duy nhất sau khi chuyển đổi.
+
+Ví dụ:
+json_integer_keys({"1": "a", "2": "b"})  # Kết quả: {1: "a", 2: "b"}
+
+
+
+
+3. Hàm to_latex(metrics)
+Chức năng:
+Chuyển đổi dữ liệu số liệu (metrics) thành định dạng bảng LaTeX.
+Được dùng để tạo báo cáo hoặc xuất kết quả phân tích dưới dạng bảng.
+
+Input:
+metrics (kiểu dict hoặc tương tự): Một dictionary hoặc đối tượng dữ liệu có thể chuyển thành bảng (DataFrame).
+
+Output:
+Chuỗi định dạng LaTeX (kiểu str): Bảng LaTeX biểu diễn dữ liệu trong metrics.
+
+Hoạt động:
+Chuyển dữ liệu metrics thành DataFrame với pandas.
+Nhân các giá trị với 100 (giả sử để chuyển đổi sang phần trăm).
+Xuất bảng dưới dạng LaTeX với định dạng số thực (float_format='%.1f').
+
+Ví dụ:
+metrics = {"accuracy": 0.95, "precision": 0.90}
+print(to_latex(metrics))
+
+Kết quả (dạng LaTeX):
+\begin{tabular}{lrr}
+\toprule
+    & accuracy & precision \\
+\midrule
+0 & 95.0 & 90.0 \\
+\bottomrule
+\end{tabular}

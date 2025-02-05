@@ -1,0 +1,1073 @@
+==================================================================================================
+
+
+Đoạn mã mà bạn cung cấp liên quan đến việc xử lý văn bản, tạo các đoạn văn (passages) từ các đoạn văn lớn,
+và lưu trữ dữ liệu đã được chia thành các đoạn văn để phục vụ cho các mô hình học máy.
+Mục tiêu của mã này là tiền xử lý dữ liệu văn bản cho các tác vụ như trả lời câu hỏi (QA) hay phân loại văn bản.
+
+
+Mã nguồn được chia thành ba chức năng chính, mỗi chức năng tương ứng với một chế độ (mode):
+
+a. passages
+Mục đích: Chia các bài viết Wikipedia (từ dataset kilt_wikipedia) thành các đoạn văn (passages).
+Các tùy chọn hỗ trợ:
+prepend_title:
+Quyết định có thêm tiêu đề bài viết vào đầu mỗi đoạn hay không.
+Nếu có, tiêu đề được nối với đoạn văn dưới dạng: "<title> [SEP] <passage>".
+special_fields:
+Xóa bỏ các trường đặc biệt như tiêu đề, tiêu đề mục con ("Section::::"), hoặc các dấu đầu dòng ("BULLET::::").
+uniform:
+Chia văn bản thành các đoạn có độ dài cố định là n token, không có sự chồng lặp giữa các đoạn.
+Tokenization được thực hiện bằng một tokenizer từ thư viện transformers.
+uniform_sents:
+Văn bản được chia thành câu sử dụng spaCy.
+Sau đó, các câu được nhóm lại thành đoạn sao cho mỗi đoạn chứa tối đa n token.
+Lưu ý: Ở đây sử dụng token của spaCy, khác với token của transformers trong tùy chọn uniform.
+
+b. map
+Mục đích: Tạo một tệp JSON từ một cột trong dataset để hỗ trợ việc lập chỉ mục nhanh (indexing).
+Ứng dụng:
+Tăng tốc độ truy vấn dữ liệu từ dataset.
+Có thể hỗ trợ các tác vụ cần ánh xạ giữa dữ liệu ban đầu và dữ liệu đã xử lý (e.g., mapping giữa các đoạn văn và câu hỏi).
+
+c. sentences
+Mục đích: Sử dụng trong bài toán Inverse Cloze Task (ICT) để chia văn bản trong dataset thành danh sách các câu.
+Cách hoạt động:
+Văn bản được phân tách thành các câu riêng lẻ bằng cách sử dụng spaCy.
+Kết quả là danh sách các câu, phục vụ cho các bài toán yêu cầu phân tích mức độ câu, ví dụ như học truy vấn ngược.
+
+
+loading.py passages <input> <output> [<config> --disable_caching]
+loading.py map <dataset> <key> <output> [--inverse --one2many --disable_caching]
+loading.py sentences <dataset>
+<input> và <output>:
+<input>: Đường dẫn tới tệp dữ liệu đầu vào.
+<output>: Đường dẫn nơi lưu tệp dữ liệu đã xử lý.
+<config> (chỉ cho chế độ passages):
+Tệp cấu hình JSON, xác định các tùy chọn như prepend_title, special_fields, v.v.
+--disable_caching:
+Tùy chọn vô hiệu hóa bộ nhớ đệm của thư viện datasets.
+Thường không cần thiết khi sử dụng save_to_disk, nhưng hữu ích khi xử lý dữ liệu lớn cần giảm tiêu tốn bộ nhớ.
+--inverse và --one2many (chỉ cho chế độ map):
+Tùy chọn đặc biệt để chỉ định cách lập chỉ mục (cụ thể không được giải thích rõ trong chú thích này).
+
+
+
+==================================================================================================
+
+
+
+a.Image.MAX_IMAGE_PIXELS
+
+Image.MAX_IMAGE_PIXELS = None
+
+Ý nghĩa:
+Xóa giới hạn số lượng pixel tối đa cho một ảnh khi mở bằng Pillow.
+Tránh lỗi DecompressionBombError khi xử lý các ảnh có kích thước quá lớn.
+Ứng dụng:
+Dùng khi xử lý ảnh lớn từ các bộ dữ liệu như MS-COCO hoặc OK-VQA.
+
+
+b. ImageFile.LOAD_TRUNCATED_IMAGES
+
+ImageFile.LOAD_TRUNCATED_IMAGES = True
+
+Ý nghĩa:
+Cho phép Pillow mở các ảnh bị cắt ngắn hoặc không đầy đủ thay vì ném lỗi UnidentifiedImageError.
+Ứng dụng:
+Hữu ích khi bộ dữ liệu có các ảnh không hoàn chỉnh.
+
+
+c. DATA_ROOT_PATH
+
+DATA_ROOT_PATH = (Path(ROOT_PATH).parent.parent/"data").resolve()
+
+Ý nghĩa:
+Đường dẫn gốc đến thư mục chứa dữ liệu (data).
+Được tính từ vị trí gốc của module meerqat (ROOT_PATH).
+Ứng dụng:
+Làm cơ sở cho các đường dẫn khác như COMMONS_PATH, KVQA_PATH.
+
+
+d. Các hằng số đường dẫn dữ liệu
+
+COMMONS_PATH = DATA_ROOT_PATH / "Commons"
+IMAGE_PATH = Path(os.environ.get("VIQUAE_IMAGES_PATH", COMMONS_PATH))
+KVQA_PATH = DATA_ROOT_PATH/"KVQA"
+OKVQA_PATH = DATA_ROOT_PATH/"OK-VQA"
+MSCOCO_PATH = DATA_ROOT_PATH/"MS-COCO"
+
+Ý nghĩa:
+Định nghĩa các đường dẫn cho các tập dữ liệu cụ thể:
+COMMONS_PATH: Dữ liệu thuộc Wikipedia Commons.
+KVQA_PATH: Dữ liệu từ bộ câu hỏi KVQA.
+OKVQA_PATH: Dữ liệu từ bộ câu hỏi OK-VQA.
+MSCOCO_PATH: Dữ liệu từ MS-COCO.
+IMAGE_PATH:
+Đường dẫn mặc định trỏ tới COMMONS_PATH, nhưng có thể được thay đổi qua biến môi trường VIQUAE_IMAGES_PATH.
+
+
+
+==================================================================================================
+
+
+
+FUNCTION: verbose_load_from_disk(dataset_path)
+
+
+
+1. Mục đích:
+Tải một tập dữ liệu từ đường dẫn trên đĩa và in thông tin về tiến trình tải và nội dung của tập dữ liệu.
+
+2. Input:
+dataset_path (str): Đường dẫn đến tập dữ liệu đã lưu trên đĩa.
+
+3. Output:
+Đối tượng tập dữ liệu được tải (dạng Dataset từ thư viện datasets).
+
+4. Giải thích code:
+In thông báo cho biết tập dữ liệu nào đang được tải.
+Sử dụng hàm load_from_disk từ thư viện datasets để tải tập dữ liệu từ đường dẫn chỉ định.
+In nội dung tập dữ liệu sau khi tải.
+Trả về đối tượng tập dữ liệu.
+
+5. Ví dụ minh họa:
+Đầu vào:
+dataset_path = "./saved_dataset"
+
+Đầu ra:
+Loading './saved_dataset'
+Dataset({
+    features: ['text', 'label'],
+    num_rows: 100
+})
+Kết quả trả về là một đối tượng Dataset chứa dữ liệu đã tải.
+
+
+
+==================================================================================================
+
+
+
+FUNCTION: save_image(image, output_path)
+
+
+
+1. Mục đích:
+Lưu một đối tượng ảnh (PIL.Image) vào một đường dẫn cụ thể, đồng thời xử lý các lỗi phát sinh trong quá trình lưu.
+
+2. Input:
+image (PIL.Image): Đối tượng ảnh cần lưu.
+output_path (str hoặc Path): Đường dẫn nơi lưu ảnh.
+
+3. Output:
+Không có giá trị trả về, nhưng ảnh được lưu vào tệp tại output_path.
+Nếu xảy ra lỗi, cảnh báo sẽ được hiển thị.
+
+4. Giải thích code:
+Cố gắng lưu ảnh sử dụng phương thức save() của đối tượng PIL.Image.
+Nếu xảy ra lỗi TypeError, thử gỡ lỗi bằng cách:
+Đặt thuộc tính transparency của ảnh thành None.
+Thử lưu lại.
+Nếu gặp lỗi khác, ghi lại cảnh báo và hiển thị loại lỗi gặp phải.
+Xử lý thêm cho trường hợp ảnh không thể lưu được.
+
+5. Ví dụ minh họa:
+Đầu vào:
+from PIL import Image
+image = Image.new("RGB", (100, 100), color="blue")
+save_image(image, "output_image.jpg")
+
+Đầu ra: Tệp output_image.jpg được tạo và lưu thành công trong thư mục hiện tại. Nếu có lỗi, cảnh báo sẽ được hiển thị.
+
+
+
+==================================================================================================
+
+
+
+FUNCTION: load_image(file_name)
+
+
+
+1. Mục đích:
+Tải một ảnh từ tệp bằng đường dẫn tương đối, kiểm tra tính hợp lệ của ảnh, và chuyển đổi nó sang chế độ màu RGB.
+
+2. Input:
+file_name (str): Tên file ảnh cần tải.
+
+3. Output:
+Đối tượng ảnh (PIL.Image) nếu ảnh hợp lệ.
+None nếu không thể tải ảnh hoặc ảnh không hợp lệ.
+
+4. Giải thích code:
+Kết hợp đường dẫn mặc định IMAGE_PATH với tên file để xác định vị trí ảnh.
+Cố gắng mở ảnh và chuyển đổi sang chế độ màu RGB.
+Nếu xảy ra lỗi trong quá trình mở, trả về None và hiển thị cảnh báo.
+Kiểm tra kích thước ảnh:
+Nếu chiều rộng hoặc chiều cao nhỏ hơn 1, coi là ảnh trống và trả về None.
+
+5. Ví dụ minh họa:
+Đầu vào:
+load_image("example.jpg")
+
+Đầu ra: Nếu ảnh tồn tại và hợp lệ, trả về đối tượng PIL.Image tương ứng. Nếu không, hiển thị cảnh báo.
+
+
+
+==================================================================================================
+
+
+
+FUNCTION: load_image_batch(file_names, pool=None)
+
+
+
+1. Mục đích:
+Tải một danh sách ảnh cùng lúc. Có thể sử dụng đa luồng (multiprocessing) để tăng tốc.
+
+2. Input:
+file_names (list): Danh sách các tên file ảnh cần tải.
+pool (multiprocessing.Pool, tùy chọn): Đối tượng Pool để xử lý tải ảnh song song.
+
+3. Output:
+Danh sách các đối tượng ảnh (PIL.Image) hoặc None nếu ảnh không hợp lệ.
+
+4. Giải thích code:
+Nếu không cung cấp pool, dùng vòng lặp để tải từng ảnh bằng hàm load_image.
+Nếu cung cấp pool, sử dụng phương thức map để tải ảnh song song.
+
+5. Ví dụ minh họa:
+Đầu vào:
+load_image_batch(["image1.jpg", "image2.jpg"])
+
+Đầu ra: Danh sách các ảnh đã tải (e.g., [<PIL.Image.Image>, <PIL.Image.Image>]).
+
+
+
+==================================================================================================
+
+
+
+FUNCTION: load_faces(image, root_face_path, max_n_faces=None)
+
+
+
+1. Mục đích:
+Tải các ảnh khuôn mặt được cắt ra từ một ảnh gốc, lưu trong thư mục được chỉ định.
+
+2. Input:
+image (str): Tên ảnh gốc.
+root_face_path (Path): Thư mục chứa các khuôn mặt đã được cắt ra.
+max_n_faces (int, tùy chọn): Số lượng khuôn mặt tối đa cần tải.
+
+3. Output:
+Một ảnh khuôn mặt (PIL.Image) nếu chỉ có 1 khuôn mặt.
+Danh sách các ảnh khuôn mặt nếu có nhiều hơn 1 khuôn mặt.
+None nếu không có khuôn mặt nào.
+
+4. Giải thích code:
+Chuyển tên ảnh sang định dạng .jpg và kiểm tra xem khuôn mặt đầu tiên có tồn tại không.
+Nếu tồn tại, mở và tải ảnh khuôn mặt.
+Nếu không tồn tại hoặc chỉ cần 1 khuôn mặt, trả về ảnh đầu tiên.
+Nếu cần nhiều khuôn mặt:
+Lặp qua các file khuôn mặt tiếp theo với quy ước tên image_2.jpg, image_3.jpg, ...
+Dừng khi đạt đến max_n_faces hoặc không tìm thấy ảnh tiếp theo.
+Trả về danh sách các ảnh khuôn mặt.
+
+5. Ví dụ minh họa:
+Đầu vào:
+load_faces("person.jpg", Path("./faces"))
+
+Đầu ra: Danh sách các ảnh khuôn mặt đã được tải (e.g., [<PIL.Image.Image>, <PIL.Image.Image>]).
+
+
+
+==================================================================================================
+
+
+
+FUNCTION: remove_articles(text)
+
+
+
+1. Mục đích:
+Loại bỏ các từ "a", "an", và "the" khỏi văn bản.
+
+2. Input:
+text (str): Chuỗi văn bản đầu vào.
+
+3. Output:
+Chuỗi văn bản không chứa các từ "a", "an", và "the".
+
+4. Giải thích code:
+Sử dụng biểu thức chính quy (re.sub) để tìm và thay thế tất cả các từ "a", "an", và "the" (bao gồm cả khoảng trắng trước và sau) trong chuỗi văn bản.
+Thay thế chúng bằng một chuỗi trống.
+
+5. Ví dụ minh họa:
+Đầu vào:
+remove_articles("The quick brown fox jumps over a lazy dog.")
+
+Đầu ra:
+" quick brown fox jumps over lazy dog."
+
+
+
+==================================================================================================
+
+
+
+FUNCTION: white_space_fix(text)
+
+
+
+1. Mục đích:
+Loại bỏ các khoảng trắng thừa trong văn bản và đảm bảo chỉ còn lại một khoảng trắng giữa các từ.
+
+2. Input:
+text (str): Chuỗi văn bản đầu vào.
+
+3. Output:
+Chuỗi văn bản với khoảng trắng được chuẩn hóa.
+
+4. Giải thích code:
+Sử dụng phương thức split() để tách các từ trong chuỗi thành danh sách, loại bỏ mọi khoảng trắng thừa.
+Kết hợp danh sách từ thành một chuỗi duy nhất, mỗi từ cách nhau bởi một khoảng trắng.
+
+5. Ví dụ minh họa:
+Đầu vào:
+white_space_fix("   This    is  a   test.  ")
+
+Đầu ra:
+"This is a test."
+
+
+
+==================================================================================================
+
+
+
+FUNCTION: remove_punc(text)
+
+
+
+1. Mục đích:
+Loại bỏ tất cả các ký tự dấu câu trong văn bản.
+
+2. Input:
+text (str): Chuỗi văn bản đầu vào.
+
+3. Output:
+Chuỗi văn bản không chứa các ký tự dấu câu.
+
+4. Giải thích code:
+Tạo một tập hợp (set) chứa tất cả các ký tự dấu câu từ string.punctuation.
+Sử dụng biểu thức join để nối các ký tự không thuộc tập dấu câu thành một chuỗi mới.
+
+5. Ví dụ minh họa:
+Đầu vào:
+remove_punc("Hello, world! This is a test.")
+
+Đầu ra:
+"Hello world This is a test"
+
+
+
+==================================================================================================
+
+
+
+FUNCTION: answer_preprocess(answer)
+
+
+
+1. Mục đích:
+Chuẩn hóa câu trả lời bằng cách chuyển về chữ thường, loại bỏ dấu câu, các từ "a", "an", "the", và khoảng trắng thừa.
+
+2. Input:
+answer (str): Chuỗi văn bản cần chuẩn hóa.
+
+3. Output:
+Chuỗi văn bản đã được chuẩn hóa.
+
+4. Giải thích code:
+Chuyển văn bản về chữ thường (lower()).
+Loại bỏ dấu câu bằng remove_punc.
+Loại bỏ các từ "a", "an", và "the" bằng remove_articles.
+Chuẩn hóa khoảng trắng bằng white_space_fix.
+
+5. Ví dụ minh họa:
+Đầu vào:
+answer_preprocess("The Quick, Brown Fox!")
+
+Đầu ra:
+"quick brown fox"
+
+
+
+==================================================================================================
+
+
+
+FUNCTION: get_class_from_name(class_name)
+
+
+
+1. Mục đích:
+Tìm và trả về một lớp Python từ tên lớp (class_name) trong danh sách các module đã định nghĩa.
+
+2. Input:
+class_name (str): Tên lớp cần tìm.
+
+3. Output:
+Lớp Python tương ứng nếu tìm thấy.
+Gây lỗi ValueError nếu không tìm thấy lớp.
+
+4. Giải thích code:
+Duyệt qua danh sách các module (mm, qa, rr, transformers).
+Sử dụng getattr để tìm lớp theo class_name trong mỗi module.
+Nếu tìm thấy lớp, trả về lớp đó.
+Nếu không tìm thấy trong bất kỳ module nào, đưa ra lỗi thông báo.
+
+5. Ví dụ minh họa:
+Đầu vào:
+get_class_from_name("BertForSequenceClassification")
+
+Đầu ra: Trả về lớp BertForSequenceClassification từ module transformers.
+
+
+
+==================================================================================================
+
+
+
+FUNCTION: get_pretrained(class_name, pretrained_model_name_or_path, **kwargs)
+
+
+
+1. Mục đích:
+Tải một mô hình đã được huấn luyện trước hoặc khởi tạo một mô hình mới từ lớp được chỉ định.
+
+2. Input:
+class_name (str): Tên lớp của mô hình.
+pretrained_model_name_or_path (str hoặc None): Tên hoặc đường dẫn của mô hình đã huấn luyện trước. Nếu là None, mô hình mới được khởi tạo ngẫu nhiên.
+**kwargs (dict): Các tham số bổ sung cho mô hình.
+
+3. Output:
+Đối tượng mô hình được khởi tạo hoặc tải.
+
+4. Giải thích code:
+Sử dụng get_class_from_name để tìm lớp mô hình từ tên lớp.
+Nếu pretrained_model_name_or_path là None:
+Khởi tạo mô hình với cấu hình mặc định (Class.config_class).
+In thông tin mô hình vừa khởi tạo.
+Nếu có đường dẫn hoặc tên mô hình:
+Tải mô hình từ mô hình đã huấn luyện trước với Class.from_pretrained.
+Trả về đối tượng mô hình.
+
+5. Ví dụ minh họa:
+Đầu vào:
+get_pretrained("BertForSequenceClassification", "bert-base-uncased")
+
+Đầu ra: Trả về mô hình BertForSequenceClassification đã được tải từ bert-base-uncased.
+
+
+
+==================================================================================================
+
+
+
+FUNCTION: map_kilt_triviaqa()
+
+
+
+1. Mục đích:
+Kết hợp dữ liệu từ bộ dữ liệu KILT-TriviaQA và TriviaQA ban đầu để tạo một tập dữ liệu đầy đủ hơn bằng cách ánh xạ các ID câu hỏi
+KILT tới dữ liệu gốc trong TriviaQA.
+
+2. Input:
+Không có đầu vào trực tiếp.
+
+3. Output:
+Tập dữ liệu KILT đã được mở rộng, với các câu hỏi và câu trả lời gốc được thêm từ TriviaQA.
+
+4. Giải thích code:
+Tải dữ liệu:
+Tải tập dữ liệu KILT (kilt_tasks) và TriviaQA ban đầu (trivia_qa).
+TriviaQA ở đây được sử dụng phiên bản "unfiltered.nocontext".
+Hàm phụ add_missing_data:
+Nhận từng mẫu trong KILT.
+Thêm câu hỏi gốc từ TriviaQA vào trường 'input'.
+Thêm câu trả lời gốc từ TriviaQA vào trường 'output'['original_answer'].
+Lặp qua các tập (train, validation, test):
+Tạo ánh xạ giữa ID của câu hỏi trong KILT và chỉ số của nó trong TriviaQA (triviaqa_map).
+Lọc dữ liệu KILT để giữ lại các ID có trong TriviaQA.
+Sử dụng hàm map để thêm dữ liệu thiếu (câu hỏi và câu trả lời) từ TriviaQA.
+Trả về:
+Tập dữ liệu KILT đã được làm giàu với dữ liệu đầy đủ từ TriviaQA.
+
+5. Ví dụ minh họa:
+Đầu ra:
+Tập dữ liệu KILT mới, với các câu hỏi và câu trả lời được thêm đầy đủ, có dạng:
+{
+  "id": "some-id",
+  "input": "What is the capital of France?",
+  "output": {
+    "original_answer": "Paris"
+  }
+}
+
+
+
+==================================================================================================
+
+
+
+FUNCTION: make_mapping(value, index, mapping, inverse=False, one2many=False)
+
+
+
+1. Mục đích:
+Tạo ánh xạ giữa hai giá trị value và index, với tùy chọn xử lý một-nhiều hoặc đảo chiều ánh xạ.
+
+2. Input:
+Không có đầu vào trực tiếp.
+
+3. Output:
+Bản đồ mapping được cập nhật.
+
+4. Giải thích code:
+Nếu inverse=True, hoán đổi value và index.
+Nếu one2many=True:
+Kiểm tra xem index đã tồn tại trong mapping hay chưa.
+Nếu chưa, tạo một danh sách trống cho index.
+Thêm value vào danh sách.
+Nếu không phải one2many:
+Cập nhật mapping sao cho index ánh xạ đến value.
+
+5. Ví dụ minh họa:
+Đầu vào:
+mapping = {}
+make_mapping("cat", 1, mapping, one2many=True)
+make_mapping("dog", 1, mapping, one2many=True)
+
+Đầu ra:
+{1: ["cat", "dog"]}
+
+
+
+==================================================================================================
+
+
+
+FUNCTION: make_mapping_dataset(dataset_path, key, save_name, **kwargs)
+
+
+
+1. Mục đích:
+Tạo một ánh xạ từ cột trong tập dữ liệu tới chỉ số hoặc giá trị tương ứng, và lưu ánh xạ dưới dạng file JSON.
+
+2. Input:
+dataset_path (str hoặc Path): Đường dẫn tới tập dữ liệu.
+key (str): Tên cột được sử dụng để tạo ánh xạ.
+save_name (str): Tên file JSON để lưu ánh xạ.
+**kwargs: Các tham số bổ sung cho hàm ánh xạ (make_mapping).
+
+3. Output:
+Không có đầu ra trả về, nhưng ánh xạ được lưu dưới dạng file JSON.
+
+4. Giải thích code:
+Tải tập dữ liệu:
+Sử dụng load_from_disk để tải tập dữ liệu từ đường dẫn.
+Xóa cột không cần thiết:
+Giữ lại chỉ cột được chỉ định bởi key.
+Tạo ánh xạ:
+Gọi hàm map trên tập dữ liệu, sử dụng hàm make_mapping để tạo ánh xạ.
+with_indices=True để truyền chỉ số của mỗi dòng vào hàm ánh xạ.
+Các tham số bổ sung được truyền qua fn_kwargs.
+Lưu ánh xạ:
+Lưu bản đồ ánh xạ (mapping) dưới dạng file JSON vào đường dẫn dataset_path/save_name.
+
+5. Ví dụ minh họa:
+Đầu vào:
+make_mapping_dataset("path/to/dataset", "id", "mapping.json", inverse=True, one2many=False)
+
+Đầu ra:
+File mapping.json với nội dung:
+{
+  "value1": 0,
+  "value2": 1,
+  "value3": 2
+}
+
+
+
+==================================================================================================
+
+
+
+FUNCTION: remove_special_fields(paragraphs)
+
+
+
+1. Mục đích:
+Chức năng này loại bỏ các trường đặc biệt trong các đoạn văn, bao gồm tiêu đề bài viết, tiêu đề các phần ("Section::::")
+và các bullet-points ("BULLET::::") từ danh sách các đoạn văn đã cho.
+
+2. Input:
+paragraphs (List[str]): Danh sách các đoạn văn (strings), trong đó đoạn đầu tiên là tiêu đề và có thể có các đoạn tiêu đề
+phần và bullet-points cần loại bỏ.
+
+3. Output:
+preprocessed_paragraphs (List[str]): Danh sách các đoạn văn đã được xử lý, không còn tiêu đề bài viết, tiêu đề các phần, và các bullet-points.
+
+4. Giải thích code:
+Bỏ qua tiêu đề:
+Bỏ qua đoạn văn đầu tiên trong danh sách, vì nó là tiêu đề bài viết.
+Loại bỏ tiêu đề phần và bullet-points:
+Kiểm tra xem mỗi đoạn văn có bắt đầu bằng "Section::::" (tiêu đề phần) hoặc "BULLET::::" (bullet-point) không. Nếu có, đoạn văn đó bị bỏ qua.
+Giữ lại các đoạn văn bình thường:
+Các đoạn văn không phải là tiêu đề phần hoặc bullet-point được thêm vào danh sách kết quả (preprocessed_paragraphs).
+
+5. Ví dụ minh họa:
+Đầu vào:
+paragraphs = [
+    "Title of the document",  # Đoạn tiêu đề
+    "Section:::: Introduction",  # Tiêu đề phần
+    "BULLET:::: First point",  # Bullet-point
+    "This is the main content of the document.",  # Đoạn nội dung chính
+    "Section:::: Conclusion"  # Tiêu đề phần
+]
+remove_special_fields(paragraphs)
+
+Đầu ra:
+["This is the main content of the document."]
+
+
+
+==================================================================================================
+
+
+
+FUNCTION: paragraphs_preprocess(paragraphs, method=None, **kwargs)
+
+
+
+1. Mục đích:
+Hàm này cho phép áp dụng các phương pháp tiền xử lý khác nhau lên danh sách các đoạn văn.
+Tùy theo method, hàm sẽ chọn phương pháp tiền xử lý thích hợp.
+
+2. Input:
+paragraphs (List[str]): Danh sách các đoạn văn cần tiền xử lý.
+method (str, optional): Loại phương pháp tiền xử lý cần áp dụng. Nếu không có phương pháp nào được chỉ định (None), hàm sẽ trả về các đoạn văn không thay đổi.
+**kwargs: Các đối số bổ sung sẽ được chuyển vào các hàm tiền xử lý tương ứng.
+
+3. Output:
+paragraphs (List[str]): Danh sách các đoạn văn đã được xử lý (nếu có phương pháp tiền xử lý áp dụng).
+
+4. Giải thích code:
+Phương pháp tiền xử lý:
+methods là một từ điển ánh xạ các phương pháp tiền xử lý với hàm tương ứng.
+Nếu method là None, hàm trả về chính danh sách đoạn văn mà không thay đổi gì.
+Nếu method là "special_fields", hàm gọi remove_special_fields để loại bỏ các trường đặc biệt như tiêu đề bài viết, tiêu đề phần, và bullet-points.
+Áp dụng phương pháp:
+Dựa trên giá trị của method, hàm chọn hàm xử lý phù hợp và áp dụng lên danh sách paragraphs.
+Trả về kết quả:
+Sau khi áp dụng phương pháp tiền xử lý (nếu có), hàm trả về danh sách các đoạn văn đã được xử lý.
+
+5. Ví dụ minh họa:
+Đầu vào:
+paragraphs = [
+    "Title of the document",
+    "Section:::: Introduction",
+    "BULLET:::: First point",
+    "This is the main content of the document."
+]
+paragraphs_preprocess(paragraphs, method="special_fields")
+
+Đầu ra:
+["This is the main content of the document."]
+
+
+
+==================================================================================================
+
+
+
+FUNCTION: uniform_passages(paragraphs, tokenizer, n=100, title=None)
+
+
+
+1. Mục đích:
+Hàm này chia danh sách các đoạn văn đã xử lý thành các đoạn văn nhỏ (passages) sao cho mỗi đoạn văn có tối đa n token,
+với khả năng tùy chọn thêm tiêu đề vào đầu mỗi đoạn văn.
+
+2. Input:
+paragraphs (List[str]): Danh sách các đoạn văn đã xử lý.
+tokenizer (PreTrainedTokenizer): Bộ tokenizer đã huấn luyện sẵn, được sử dụng để chuyển đổi văn bản thành token.
+n (int, optional): Số lượng token tối đa trong mỗi đoạn văn (không tính tiêu đề), mặc định là 100.
+title (str, optional): Tiêu đề muốn thêm vào đầu mỗi đoạn văn. Nếu không có tiêu đề, chỉ có nội dung đoạn văn.
+
+3. Output:
+passages (List[str]): Danh sách các đoạn văn đã được chia, mỗi đoạn không vượt quá n token. Nếu có tiêu đề, tiêu đề được thêm vào đầu mỗi đoạn.
+
+4. Giải thích code:
+Ghép các đoạn văn lại:
+Tất cả các đoạn văn trong paragraphs được ghép lại thành một chuỗi duy nhất.
+Token hóa văn bản:
+Văn bản ghép lại được chuyển thành danh sách các token sử dụng tokenizer.tokenize.
+Tiêu đề:
+Nếu title không phải là None, tiêu đề sẽ được token hóa và thêm vào đầu mỗi đoạn văn.
+Chia văn bản thành các đoạn nhỏ (passages):
+Chia danh sách các token thành các đoạn, mỗi đoạn có tối đa n token.
+Nếu có tiêu đề, tiêu đề được thêm vào đầu mỗi đoạn văn.
+Trả về kết quả:
+Trả về danh sách các đoạn văn đã được chia nhỏ, mỗi đoạn không vượt quá n token.
+
+5. Ví dụ minh họa:
+Đầu vào:
+paragraphs = ["This is the first paragraph. It contains several sentences.",
+              "This is the second paragraph, with some more text."]
+tokenizer = transformers.AutoTokenizer.from_pretrained("bert-base-uncased")
+uniform_passages(paragraphs, tokenizer, n=10, title="Document Title")
+
+Đầu ra:
+[
+    "Document Title [SEP] This is the first",
+    "paragraph. It contains several sentences.",
+    "Document Title [SEP] This is the second",
+    "paragraph, with some more text."
+]
+
+
+
+==================================================================================================
+
+
+
+FUNCTION: uniform_passages_of_sentences(paragraphs, model, n=100, title=None, sep_token='[SEP]')
+
+
+
+1. Mục đích:
+Hàm này chia văn bản thành các đoạn văn dựa trên câu, mỗi đoạn văn có tối đa n token.
+Văn bản không bị thay đổi (ví dụ: không chuyển thành chữ thường) và các câu được nhóm lại thành các đoạn
+sao cho số lượng token không vượt quá n. Nếu có tiêu đề, tiêu đề sẽ được thêm vào đầu mỗi đoạn văn.
+
+2. Input:
+paragraphs (List[str]): Danh sách các đoạn văn đã xử lý.
+model (spacy model): Mô hình spaCy đã huấn luyện sẵn để phân tích câu trong văn bản.
+n (int, optional): Số lượng token tối đa trong mỗi đoạn văn (không tính tiêu đề). Mặc định là 100.
+title (str, optional): Tiêu đề sẽ được thêm vào đầu mỗi đoạn văn.
+sep_token (str, optional): Ký tự phân tách giữa tiêu đề và đoạn văn (mặc định là [SEP]).
+
+3. Output:
+passages (List[str]): Danh sách các đoạn văn, mỗi đoạn có tối đa n token và không thay đổi về mặt văn bản.
+
+4. Giải thích code:
+Ghép các đoạn văn lại:
+Tất cả các đoạn văn trong paragraphs được ghép lại thành một chuỗi duy nhất.
+Tiêu đề:
+Nếu title không phải là None, tiêu đề được thêm vào đầu mỗi đoạn văn và được phân tách với nội dung đoạn văn bằng sep_token.
+Phân câu:
+Sử dụng mô hình spaCy để phân tích và chia văn bản thành các câu (sentences).
+Nhóm câu thành các đoạn nhỏ:
+Các câu được nhóm lại thành các đoạn sao cho mỗi đoạn có tối đa n token. Nếu một câu dài hơn n token, nó sẽ được đặt vào một đoạn riêng biệt.
+Trả về kết quả:
+Trả về danh sách các đoạn văn, mỗi đoạn không vượt quá n token. Nếu có tiêu đề, tiêu đề được thêm vào đầu mỗi đoạn.
+
+5. Ví dụ minh họa:
+Đầu vào:
+paragraphs = ["This is the first sentence. It contains several words.",
+              "This is the second sentence, which is a bit longer."]
+model = spacy.load("en_core_web_sm")
+uniform_passages_of_sentences(paragraphs, model, n=10, title="Document Title")
+
+Đầu ra:
+[
+    "Document Title [SEP] This is the first",
+    "sentence. It contains several words.",
+    "Document Title [SEP] This is the second",
+    "sentence, which is a bit longer."
+]
+
+
+
+==================================================================================================
+
+
+
+FUNCTION: make_passages(paragraphs, method=None, preprocessing_method=None, preprocessing_kwargs={}, **kwargs)
+
+
+
+1. Mục đích:
+Hàm này chia một danh sách các đoạn văn thành các đoạn nhỏ (passages), với các phương thức khác nhau để xử lý
+và chia đoạn văn (bao gồm việc xử lý trước khi chia đoạn và lựa chọn phương thức chia đoạn).
+
+2. Input:
+paragraphs (List[str]): Danh sách các đoạn văn cần được xử lý.
+method (str, optional): Phương thức chia văn bản thành các đoạn nhỏ. Các phương thức có sẵn là None (giữ nguyên đoạn văn), "uniform" (chia theo số lượng token), "uniform_sents" (chia theo các câu). Mặc định là None.
+preprocessing_method (str, optional): Phương thức xử lý trước khi chia đoạn văn (ví dụ: loại bỏ tiêu đề hoặc các trường đặc biệt). Mặc định là None.
+preprocessing_kwargs (dict, optional): Các tham số bổ sung cho phương thức xử lý trước khi chia đoạn.
+**kwargs: Các tham số bổ sung khác sẽ được truyền vào các phương thức chia đoạn cụ thể.
+
+3. Output:
+passages (List[str]): Danh sách các đoạn văn sau khi đã được chia nhỏ theo phương thức được chỉ định.
+
+4. Giải thích code:
+Tiền xử lý các đoạn văn:
+Các đoạn văn được xử lý trước bằng phương thức paragraphs_preprocess với các tham số method và preprocessing_kwargs.
+Chọn phương thức chia đoạn:
+Dựa trên giá trị của method, hàm sẽ chọn phương thức chia đoạn phù hợp:
+Nếu method là None, các đoạn văn giữ nguyên mà không thay đổi.
+Nếu method là "uniform", hàm sử dụng uniform_passages để chia văn bản thành các đoạn nhỏ có độ dài cố định.
+Nếu method là "uniform_sents", hàm sử dụng uniform_passages_of_sentences để chia văn bản thành các đoạn nhỏ dựa trên câu.
+Trả về kết quả:
+Hàm trả về danh sách các đoạn văn đã được chia nhỏ.
+
+5. Ví dụ minh họa:
+Đầu vào:
+paragraphs = ["This is the first paragraph. It contains several sentences.",
+              "This is the second paragraph, with some more text."]
+make_passages(paragraphs, method="uniform", n=10, title="Document Title")
+
+Đầu ra:
+["Document Title [SEP] This is the first",
+ "paragraph. It contains several sentences.",
+ "Document Title [SEP] This is the second",
+ "paragraph, with some more text."]
+
+
+
+==================================================================================================
+
+
+
+FUNCTION: make_passage_item(item, index, passage_dict, prepend_title=False, **kwargs)
+
+
+
+1. Mục đích:
+Hàm này xử lý một item trong dataset, chia các đoạn văn của item thành các đoạn nhỏ (passages) và lưu trữ chúng vào một từ điển passage_dict.
+Tiêu đề có thể được thêm vào trước mỗi đoạn văn nếu prepend_title là True.
+
+2. Input:
+item (dict): Một item trong dataset, chứa thông tin như tiêu đề và các đoạn văn.
+index (int): Chỉ số của item trong dataset.
+passage_dict (dict): Từ điển chứa các danh sách passage và index để lưu trữ các đoạn văn và chỉ số tương ứng.
+prepend_title (bool, optional): Nếu là True, tiêu đề sẽ được thêm vào mỗi đoạn văn. Mặc định là False.
+**kwargs: Các tham số bổ sung sẽ được truyền vào các hàm khác.
+
+3. Output:
+item (dict): Item đã được cập nhật với các đoạn văn được chia nhỏ và chỉ số của các đoạn văn.
+
+4. Giải thích code:
+Xử lý tiêu đề:
+Nếu prepend_title là True, tiêu đề từ item['wikipedia_title'] sẽ được sử dụng.
+Chia các đoạn văn:
+Hàm make_passages sẽ chia các đoạn văn của item thành các đoạn nhỏ. Nếu có tiêu đề, tiêu đề sẽ được thêm vào đầu mỗi đoạn.
+Cập nhật từ điển passage_dict:
+Thêm các đoạn văn vào danh sách passage trong passage_dict, và thêm chỉ số của item vào danh sách index.
+
+5. Ví dụ minh họa:
+Đầu vào:
+item = {'wikipedia_title': 'Test Title', 'text': {'paragraph': ["This is the first paragraph.", "This is the second paragraph."]}}
+passage_dict = {'passage': [], 'index': []}
+make_passage_item(item, index=0, passage_dict=passage_dict, prepend_title=True, method='uniform', n=5)
+
+Đầu ra:
+item = {'wikipedia_title': 'Test Title', 'text': {'paragraph': ["This is the first paragraph.", "This is the second paragraph."]}, 'passage_index': [0, 1]}
+passage_dict = {'passage': ['Test Title [SEP] This is the first', 'Test Title [SEP] paragraph. This is the second'], 'index': [0, 0]}
+
+
+
+==================================================================================================
+
+
+
+FUNCTION: make_passage_dataset(input_path, output_path, sentencizer=False, **kwargs)
+
+
+
+1. Mục đích:
+Hàm này tạo một dataset mới từ các đoạn văn trong dataset gốc, chia các đoạn văn thành các đoạn nhỏ (passages), và lưu trữ kết quả vào đĩa.
+
+2. Input:
+input_path (str): Đường dẫn đến dataset gốc.
+output_path (str): Đường dẫn để lưu dataset mới.
+sentencizer (bool, optional): Nếu là True, sử dụng mô hình phân câu của spaCy để phân tách văn bản thành các câu. Mặc định là False.
+**kwargs: Các tham số bổ sung sẽ được truyền vào các hàm khác.
+
+3. Output:
+Không trả về giá trị cụ thể, nhưng dataset mới sẽ được lưu vào đĩa tại output_path.
+
+4. Giải thích code:
+Đọc dataset:
+Dataset được tải từ input_path.
+Sử dụng spaCy (nếu có):
+Nếu sentencizer là True, mô hình spaCy được sử dụng để phân tách các câu trong văn bản.
+Tạo các đoạn văn:
+Hàm make_passage_item được gọi để chia các đoạn văn thành các đoạn nhỏ, và các đoạn văn được lưu vào passage_dict.
+Lưu dataset mới:
+Dataset mới sẽ được lưu vào output_path.
+
+5. Ví dụ minh họa:
+Đầu vào:
+input_path = "input_dataset"
+output_path = "output_dataset"
+make_passage_dataset(input_path, output_path, sentencizer=True, method="uniform", n=50)
+
+Đầu ra:
+Dataset mới sẽ được lưu tại output_dataset, với các đoạn văn đã được chia thành các passages.
+
+
+
+==================================================================================================
+
+
+
+FUNCTION: make_sentences_item(item, model)
+
+
+
+1. Mục đích:
+Hàm này phân tách văn bản trong item thành các câu riêng biệt và lưu trữ các câu cùng với số lượng token trong mỗi câu.
+
+2. Input:
+item (dict): Một item trong dataset, chứa văn bản cần phân tách thành câu.
+model (spacy model): Mô hình spaCy đã được huấn luyện sẵn để phân tách câu.
+
+3. Output:
+item (dict): Item đã được cập nhật với các câu và số lượng token trong mỗi câu.
+
+4. Giải thích code:
+Phân tách câu:
+Mô hình spaCy phân tách văn bản thành các câu.
+Cập nhật item:
+Mỗi câu được lưu vào item['sentences'] dưới dạng một từ điển, cùng với số lượng token của câu.
+
+5. Ví dụ minh họa:
+Đầu vào:
+item = {'text': 'This is the first sentence. This is the second sentence.'}
+model = spacy.load("en_core_web_sm")
+make_sentences_item(item, model)
+
+Đầu ra:
+item = {'text': 'This is the first sentence. This is the second sentence.',
+        'sentences': [{'text': 'This is the first sentence.', 'n_tokens': 5},
+                     {'text': 'This is the second sentence.', 'n_tokens': 5}]}
+
+
+
+==================================================================================================
+
+
+
+MAIN
+
+
+
+a. Chế độ passages:
+Nếu tham số dòng lệnh passages được chỉ định, chương trình sẽ thực thi khối mã trong phần này.
+
+Ý nghĩa: Tạo một dataset mới từ các đoạn văn (passages).
+
+Quy trình:
+
+Đọc tệp cấu hình (nếu có) từ tham số <config> và tải cấu hình JSON vào biến config.
+Nếu không có tệp cấu hình, chương trình sẽ sử dụng cấu hình mặc định (là {}).
+Hàm load_pretrained_in_kwargs(config) được gọi để tải các mô hình đã huấn luyện sẵn (nếu có).
+Cuối cùng, hàm make_passage_dataset được gọi với các tham số đầu vào và cấu hình đã tải, để tạo dataset các đoạn văn và lưu vào thư mục output.
+
+Lệnh dòng lệnh:
+python script.py passages <input> <output> --disable_caching --<config>
+passages: Chế độ tạo các đoạn văn từ văn bản.
+<input>: Đường dẫn đến tập dữ liệu đầu vào.
+<output>: Đường dẫn lưu trữ dataset đầu ra.
+--disable_caching: Vô hiệu hóa bộ nhớ đệm.
+<config>: Cấu hình cần tải (tệp JSON).
+
+
+b. Chế độ map:
+Nếu tham số map được chỉ định, chương trình sẽ thực thi khối mã trong phần này.
+
+Ý nghĩa: Tạo dataset ánh xạ (mapping dataset).
+
+Quy trình:
+
+Hàm make_mapping_dataset được gọi với các tham số:
+<dataset>: Đường dẫn đến dataset cần ánh xạ.
+<key>: Khóa ánh xạ.
+<output>: Thư mục lưu kết quả.
+--inverse: Tham số này sẽ xác định việc ánh xạ ngược.
+--one2many: Nếu có, sẽ ánh xạ theo mô hình "một-nhiều".
+
+Lệnh dòng lệnh:
+python script.py map <dataset> <key> <output> --inverse --one2many
+map: Chế độ tạo dataset ánh xạ.
+<dataset>: Tên dataset cần xử lý.
+<key>: Khóa ánh xạ.
+<output>: Đường dẫn để lưu kết quả.
+--inverse: Ánh xạ ngược.
+--one2many: Sử dụng ánh xạ "một-nhiều".
+
+
+c. Chế độ sentences:
+Nếu tham số sentences được chỉ định, chương trình sẽ thực thi khối mã trong phần này.
+
+Ý nghĩa: Tạo dataset từ các câu trong văn bản.
+
+Quy trình:
+
+Hàm make_sentences_dataset được gọi với tham số <dataset>, để tạo dataset với các câu tách riêng biệt từ văn bản.
+Lệnh dòng lệnh:
+python script.py sentences <dataset>
+sentences: Chế độ phân tách văn bản thành các câu.
+<dataset>: Tên dataset cần xử lý.
+
+
+
+Quy trình ví dụ đầy đủ khi chạy script:
+
+
+Chế độ passages (Tạo đoạn văn):
+
+Lệnh:
+python script.py passages input_data.json output_data.json --disable_caching --config config.json
+
+Giải thích:
+passages: Chế độ tạo đoạn văn.
+input_data.json: Tập dữ liệu gốc.
+output_data.json: Kết quả sẽ được lưu ở đây.
+--disable_caching: Vô hiệu hóa caching.
+--config config.json: Tải cấu hình từ tệp config.json.
+
+
+Chế độ map (Tạo dataset ánh xạ):
+Lệnh:
+python script.py map dataset.json key output_map.json --inverse --one2many
+
+Giải thích:
+map: Chế độ ánh xạ.
+dataset.json: Tập dữ liệu cần ánh xạ.
+key: Tên khóa ánh xạ.
+output_map.json: Kết quả sẽ được lưu vào đây.
+--inverse: Thực hiện ánh xạ ngược.
+--one2many: Ánh xạ từ một đối tượng sang nhiều đối tượng.
+
+
+Chế độ sentences (Tạo dataset câu):
+Lệnh:
+python script.py sentences dataset.json
+
+Giải thích:
+sentences: Chế độ phân tách văn bản thành các câu.
+dataset.json: Tập dữ liệu gốc.
+
+
+
+Lưu ý quan trọng khi sử dụng:
+Cấu hình (config): Đảm bảo rằng bạn có cấu hình đúng (nếu sử dụng tệp cấu hình JSON), vì chương trình sẽ tải mô hình đã huấn luyện sẵn từ đó.
+Dataset đầu vào và đầu ra: Các tham số <input> và <output> phải chỉ rõ đường dẫn tới các tệp dữ liệu cần xử lý và nơi lưu kết quả.
+Bộ nhớ đệm (Caching): Nếu bạn muốn chương trình tránh tải lại dữ liệu đã được lưu trong bộ nhớ đệm, sử dụng --disable_caching.

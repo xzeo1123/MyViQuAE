@@ -1,0 +1,713 @@
+==================================================================================================
+
+
+
+Xử lý dữ liệu JSON, bảng, văn bản.
+Đánh giá câu trả lời bằng các tiêu chí (EM, F1, BEM).
+Khởi tạo và sử dụng mô hình học sâu BERT.
+
+
+
+==================================================================================================
+
+
+
+_VOCAB_PATH = str(DATA_ROOT_PATH/"models/bert-base-uncased/vocab.txt")
+
+
+
+Mô tả:
+Chỉ định đường dẫn đến file từ vựng (vocab.txt) của mô hình BERT.
+File từ vựng này được sử dụng để ánh xạ từ ngữ thành các token trước khi đưa vào mô hình BERT.
+
+
+Ý nghĩa:
+Dùng từ vựng của mô hình bert-base-uncased (phiên bản không phân biệt chữ hoa/thường).
+
+
+
+==================================================================================================
+
+
+
+_MODEL_PATH = str(DATA_ROOT_PATH/"models/bem")
+
+
+
+Mô tả:
+Đường dẫn tới mô hình BERT-based Equivalence Model (BEM).
+
+
+Ý nghĩa:
+BEM được sử dụng để so sánh độ tương đương giữa câu trả lời dự đoán và câu trả lời tham chiếu.
+
+
+
+==================================================================================================
+
+
+
+_PUNCTUATION_CHARACTERS = string.punctuation + '‘’´`_'
+
+
+
+Mô tả:
+Danh sách các ký tự dấu câu cần được loại bỏ hoặc xử lý trong quá trình chuẩn hóa văn bản.
+Bao gồm các ký tự chuẩn từ string.punctuation (ví dụ: . , ! ?) và các dấu đặc biệt khác (`‘’, ´, ``).
+
+
+Ý nghĩa:
+Đảm bảo rằng các ký tự không cần thiết không làm ảnh hưởng đến việc đánh giá tính tương đương giữa các câu trả lời.
+
+
+
+==================================================================================================
+
+
+
+_QUESTION_TYPES = ['templated', 'automatic', 'multi_answer', '2_hop']
+
+
+
+Mô tả:
+Danh sách các loại câu hỏi trong bộ dữ liệu Encyclopedic-VQA.
+
+
+Các loại câu hỏi:
+templated: Câu hỏi được tạo dựa trên các mẫu (template).
+automatic: Câu hỏi được sinh tự động từ AI hoặc hệ thống khác.
+multi_answer: Câu hỏi có nhiều câu trả lời đúng.
+2_hop: Câu hỏi yêu cầu suy luận qua 2 bước.
+
+
+Ý nghĩa:
+Cho phép phân loại và đánh giá riêng biệt theo từng loại câu hỏi.
+
+
+
+==================================================================================================
+
+
+
+_DIGIT_MAP = {
+    'none': '0',
+    'zero': '0',
+    'one': '1',
+    ...
+    'true': 'yes',
+    'false': 'no',
+}
+
+
+
+Mô tả:
+Bản đồ ánh xạ giữa từ ngữ và dạng chuẩn của số hoặc ý nghĩa logic.
+Ví dụ:
+Các từ như one, two, three sẽ được ánh xạ thành 1, 2, 3.
+Các từ như true, false sẽ được ánh xạ thành yes, no.
+
+
+Ý nghĩa:
+Giúp chuẩn hóa câu trả lời trước khi so sánh với đáp án tham chiếu.
+Giảm thiểu lỗi khi câu trả lời dùng cách viết khác nhau nhưng có cùng ý nghĩa.
+
+
+
+==================================================================================================
+
+
+
+_CONTRACTIONS = {
+    'aint': "ain't",
+    'arent': "aren't",
+    ...
+    'youve': "you've"
+}
+
+
+
+Mô tả:
+Bản đồ ánh xạ giữa các từ viết tắt và dạng đầy đủ.
+Ví dụ:
+aint → ain't.
+youre → you're.
+
+
+Ý nghĩa:
+Dùng để chuẩn hóa văn bản bằng cách chuyển các từ viết tắt về dạng đầy đủ trước khi đánh giá.
+Loại bỏ sự khác biệt không cần thiết do cách viết tắt.
+
+
+
+==================================================================================================
+
+
+FUNCTION: preprocess_answer
+
+
+Mục đích:
+Chuẩn hóa câu trả lời trong bài toán VQA (Visual Question Answering) để loại bỏ những yếu tố
+không cần thiết, chuẩn hóa chữ số, từ viết tắt và định dạng, giúp so sánh câu trả lời dễ dàng hơn.
+
+
+Đầu vào:
+answer (str): Chuỗi chứa câu trả lời cần xử lý.
+punctuation_characters (str, mặc định _PUNCTUATION_CHARACTERS): Danh sách các ký tự dấu câu cần loại bỏ hoặc thay thế.
+replacement_character (str, mặc định ''): Ký tự dùng để thay thế cho các dấu câu đã loại bỏ.
+
+
+Đầu ra:
+(str): Chuỗi đã được chuẩn hóa, loại bỏ dấu câu, ký tự không cần thiết, chuẩn hóa chữ số và viết tắt.
+
+
+Cách hoạt động:
+1. Tiền xử lý:
+
+Chuyển answer về chữ thường.
+Loại bỏ xuống dòng, tab, và khoảng trắng thừa.
+
+2. Gọi các hàm con tuần tự:
+remove_llm_span_prefix: Xóa tiền tố <extra_id_0> nếu có.
+replace_punctuation: Loại bỏ hoặc thay thế các dấu câu.
+remove_articles: Xóa các từ không cần thiết như "a", "an", "the".
+standarize_digits_and_contractions: Chuẩn hóa chữ số và từ viết tắt.
+white_space_fix: Chuẩn hóa khoảng trắng thừa.
+
+3. Trả về câu trả lời đã được xử lý.
+
+
+===========================================
+
+
+CHILD FUNCTION: remove_articles(s)
+
+
+Mục đích:
+Xóa các từ không cần thiết như "a", "an", "the" hoặc cụm từ "the answer is" để đơn giản hóa câu trả lời.
+
+
+Đầu vào:
+s (str): Chuỗi đầu vào.
+
+
+Đầu ra:
+(str): Chuỗi sau khi đã xóa các từ không cần thiết.
+
+
+Cách hoạt động:
+1. Sử dụng biểu thức chính quy r'\b(the answer is|a|an|the)\b' để tìm các từ hoặc cụm từ cần loại bỏ.
+2. Thay thế các từ hoặc cụm từ tìm thấy bằng một khoảng trắng ' ' bằng re.sub.
+3. Trả về chuỗi đã xử lý.
+
+
+===========================================
+
+
+CHILD FUNCTION: replace_punctuation(s)
+
+
+Mục đích:
+Thay thế hoặc loại bỏ các ký tự dấu câu khỏi chuỗi.
+
+
+Đầu vào:
+s (str): Chuỗi đầu vào.
+punctuation_characters (str): Các ký tự dấu câu cần thay thế.
+replacement_character (str): Ký tự dùng để thay thế (mặc định là '').
+
+
+Đầu ra:
+(str): Chuỗi sau khi đã xử lý dấu câu.
+
+
+Cách hoạt động:
+1. Chuyển punctuation_characters thành tập hợp (set) để tăng tốc độ tra cứu.
+2. Duyệt qua từng ký tự trong chuỗi:
+Nếu ký tự nằm trong tập hợp punctuation_characters, thay thế bằng replacement_character.
+Nếu không, giữ nguyên ký tự.
+3. Ghép lại các ký tự thành chuỗi mới bằng ''.join() và trả về kết quả.
+
+
+===========================================
+
+
+CHILD FUNCTION: white_space_fix(s)
+
+
+Mục đích:
+Loại bỏ khoảng trắng thừa và chuẩn hóa khoảng cách giữa các từ trong chuỗi.
+
+
+Đầu vào:
+s (str): Chuỗi cần xử lý.
+
+
+Đầu ra:
+(str): Chuỗi đã chuẩn hóa khoảng trắng.
+
+
+Cách hoạt động:
+1. Sử dụng split() để tách chuỗi thành danh sách các từ (loại bỏ toàn bộ khoảng trắng thừa).
+2. Dùng ' '.join() để ghép lại các từ bằng một khoảng trắng duy nhất giữa chúng.
+3. Trả về chuỗi đã xử lý.
+
+
+===========================================
+
+
+CHILD FUNCTION: remove_llm_span_prefix(answer, prefix = '<extra_id_0> ')
+
+
+Mục đích:
+Xóa tiền tố đặc biệt (như <extra_id_0>) mà các mô hình ngôn ngữ lớn (LLM) đôi khi thêm vào câu trả lời.
+
+
+Đầu vào:
+answer (str): Câu trả lời cần xử lý.
+prefix (str): Tiền tố cần loại bỏ (mặc định là <extra_id_0> ).
+replacement_character (str): Ký tự thay thế tiền tố (mặc định là '').
+
+
+Đầu ra:
+(str): Chuỗi sau khi đã xóa tiền tố.
+
+
+Cách hoạt động:
+1. Kiểm tra xem câu trả lời có bắt đầu bằng prefix hay không bằng phương thức startswith.
+2. Nếu có:
+Thay thế prefix bằng replacement_character sử dụng replace.
+3. Nếu không, trả về câu trả lời ban đầu.
+
+
+===========================================
+
+
+CHILD FUNCTION: standarize_digits_and_contractions(s)
+
+
+Mục đích:
+Chuẩn hóa cách viết chữ số và từ viết tắt trong chuỗi để đảm bảo tính thống nhất.
+
+
+Đầu vào:
+s (str): Chuỗi cần xử lý.
+
+
+Đầu ra:
+(str): Chuỗi đã chuẩn hóa chữ số và từ viết tắt.
+
+
+Cách hoạt động:
+1. Tách chuỗi thành danh sách các từ bằng split().
+2. Duyệt qua từng từ:
+Nếu từ có trong _DIGIT_MAP, thay thế bằng giá trị tương ứng.
+Nếu từ có trong _CONTRACTIONS, thay thế bằng giá trị tương ứng.
+3. Nối các từ đã chuẩn hóa thành chuỗi bằng ' '.join() và trả về kết quả.
+
+
+
+==================================================================================================
+
+
+
+FUNCTION: singleanswer_exact_match(reference, candidate)
+
+
+Mục đích:
+So sánh hai câu trả lời (một tham chiếu và một dự đoán) để kiểm tra xem chúng có trùng khớp chính
+xác không, sau khi đã qua bước chuẩn hóa.
+
+
+Đầu vào:
+reference (str): Câu trả lời tham chiếu (chuẩn).
+candidate (str): Câu trả lời dự đoán cần kiểm tra.
+
+
+Đầu ra:
+(bool): Kết quả so sánh chính xác.
+True nếu câu trả lời sau khi chuẩn hóa giống nhau.
+False nếu khác nhau.
+
+
+Cách hoạt động:
+1. Chuẩn hóa câu trả lời tham chiếu và câu trả lời dự đoán bằng cách gọi hàm preprocess_answer cho cả hai.
+Xử lý loại bỏ dấu câu, từ không cần thiết, chuẩn hóa chữ số, v.v.
+2. Kiểm tra:
+Nếu câu trả lời tham chiếu (sau chuẩn hóa) rỗng, đưa ra lỗi ValueError với thông báo: "Reference answer is empty after preprocessing."
+3. Trả về kết quả so sánh chính xác giữa hai câu trả lời đã chuẩn hóa bằng toán tử ==.
+
+
+
+==================================================================================================
+
+
+
+FUNCTION: _list_intersection_over_union(target_list, prediction_list)
+
+
+Mục đích:
+Tính toán chỉ số Intersection over Union (IoU) giữa hai danh sách câu trả lời
+(dùng cho các câu hỏi có nhiều câu trả lời đúng), để xác định mức độ trùng khớp
+giữa danh sách tham chiếu và danh sách dự đoán.
+
+
+Đầu vào:
+target_list (list): Danh sách câu trả lời tham chiếu.
+prediction_list (list): Danh sách câu trả lời dự đoán.
+
+
+Đầu ra:
+(float): Giá trị IoU, được tính bằng:
+IoU = |Intersection| / |Union|
+Giao (Intersection): Các phần tử chung giữa hai danh sách.
+Hợp (Union): Tập hợp tất cả các phần tử từ cả hai danh sách.
+
+
+Cách hoạt động:
+1. Kiểm tra điều kiện đầu vào:
+Nếu target_list rỗng, đưa ra lỗi ValueError với thông báo: "Target list should not be empty."
+2. Chuyển các danh sách đầu vào thành tập hợp (set) để dễ dàng tính toán giao và hợp:
+target_set: Tập hợp các phần tử từ target_list.
+prediction_set: Tập hợp các phần tử từ prediction_list.
+3. Tính toán giao và hợp:
+intersection: Giao giữa target_set và prediction_set bằng phương thức .intersection().
+union: Hợp giữa target_set và prediction_set bằng phương thức .union().
+4. Tính chỉ số IoU bằng cách chia kích thước của intersection cho kích thước của union.
+5. Trả về giá trị IoU (kiểu float).
+
+
+
+==================================================================================================
+
+
+
+FUNCTION: multianswer_exact_match(reference, candidate, iou_threshold = 0.5)
+
+
+Mục đích:
+Tính điểm khớp chính xác (Exact Match, EM) cho các câu hỏi có nhiều câu trả lời đúng.
+
+
+Đầu vào:
+reference (str): Chuỗi chứa các câu trả lời tham chiếu, ngăn cách bằng &&.
+candidate (str): Chuỗi chứa câu trả lời dự đoán.
+iou_threshold (float, mặc định 0.5): Ngưỡng Intersection over Union (IoU) để xác định khớp chính xác.
+
+
+Đầu ra:
+(bool):
+True nếu chỉ số IoU giữa các danh sách tham chiếu và dự đoán lớn hơn hoặc bằng iou_threshold.
+False nếu không.
+
+
+Cách hoạt động:
+1. Xử lý danh sách tham chiếu:
+Tách reference thành danh sách câu trả lời bằng cách dùng dấu phân cách && với phương thức .split().
+Chuẩn hóa từng câu trả lời trong danh sách bằng preprocess_answer.
+Loại bỏ các mục trống trong danh sách sau khi chuẩn hóa.
+Nếu danh sách tham chiếu rỗng sau xử lý, đưa ra lỗi ValueError với thông báo: "Reference list is empty after preprocessing."
+
+2. Xử lý danh sách dự đoán:
+Thay thế các cụm từ " and " và " & " trong candidate thành dấu phẩy (,), sau đó tách thành danh sách bằng .split(',').
+Chuẩn hóa từng câu trả lời trong danh sách bằng preprocess_answer.
+Loại bỏ các mục trống trong danh sách sau khi chuẩn hóa.
+
+3. Tính IoU:
+Gọi hàm _list_intersection_over_union với reference_list và candidate_list để tính chỉ số IoU giữa hai danh sách.
+
+4. So sánh với ngưỡng:
+Kiểm tra nếu IoU >= iou_threshold, trả về True.
+Ngược lại, trả về False.
+
+
+
+==================================================================================================
+
+
+
+FUNCTION: exact_match_scoring_function(example)
+
+
+
+Mục đích:
+Tính điểm khớp chính xác (Exact Match, EM) cho từng ví dụ, dựa trên loại câu hỏi (question_type).
+
+
+
+Đầu vào:
+- example (dict): Một từ điển chứa thông tin của một ví dụ, gồm:
+ + example['question_type'] (str): Loại câu hỏi, có thể là 'multi_answer' hoặc khác.
+ + example['reference'] (str): Câu trả lời tham chiếu.
+ + example['candidate'] (str): Câu trả lời dự đoán.
+
+
+Đầu ra:
+(bool):
+True nếu câu trả lời dự đoán khớp với tham chiếu.
+False nếu không.
+
+
+Cách hoạt động:
+1. Kiểm tra loại câu hỏi:
+- Nếu example['question_type'] là 'multi_answer', gọi hàm multianswer_exact_match với:
+reference: example['reference'].
+candidate: example['candidate'].
+Sử dụng giá trị ngưỡng IoU mặc định (0.5).
+- Ngược lại, gọi hàm singleanswer_exact_match với:
+reference: example['reference'].
+candidate: example['candidate'].
+
+2. Trả về kết quả từ hàm tương ứng (multianswer_exact_match hoặc singleanswer_exact_match).
+
+
+
+==================================================================================================
+
+
+
+FUNCTION: initialize_bem_scoring_function(vocab_path=_VOCAB_PATH, model_path=_MODEL_PATH)
+
+
+
+Mục đích:
+Khởi tạo và trả về một hàm tính điểm BEM (BERT-based Equivalence Metric) để đánh giá sự tương đồng giữa các câu trả lời trong bài toán VQA (Visual Question Answering) dạng bách khoa toàn thư.
+
+
+Đầu vào:
+vocab_path (str): Đường dẫn đến file từ vựng của tokenizer BERT (mặc định _VOCAB_PATH).
+model_path (str): Đường dẫn đến mô hình BEM được tải từ TensorFlow Hub (mặc định _MODEL_PATH).
+
+
+Đầu ra:
+(function): Hàm score_example để tính điểm BEM cho các ví dụ VQA.
+
+
+Cách hoạt động:
+1. Khởi tạo tokenizer:
+- Tạo bảng ánh xạ từ vựng (vocab_table) bằng tf.lookup.StaticVocabularyTable:
+   + Từ vựng được lấy từ file tại vocab_path.
+   + Cung cấp xử lý cho từ không có trong từ điển bằng bucket num_oov_buckets=1.
+- Lấy ID của các token đặc biệt [CLS] và [SEP] bằng vocab_table.lookup.
+- Khởi tạo tokenizer BERT (text.BertTokenizer) với cấu hình:
+   + Bảng từ vựng là vocab_table.
+   + Chuyển toàn bộ văn bản về chữ thường (lower_case=True).
+   + Bảo toàn các token không được sử dụng (preserve_unused_token=True).
+
+2. Tải mô hình BEM:
+Tải mô hình từ model_path sử dụng hub.load.
+
+3. Định nghĩa hàm tiền xử lý ví dụ:
+- Hàm preprocess_example:
+   + Token hóa question, reference, và candidate bằng tokenizer BERT và hợp nhất các chiều thừa.
+   + Kết hợp các token đã token hóa thành định dạng đầu vào BERT:
+      + Thêm token [CLS] ở đầu và [SEP] để phân cách các đoạn.
+      + Trả về input_ids và segment_ids.
+- Hàm pad:
+Bổ sung thêm 0 vào cuối để đảm bảo độ dài là 512 (độ dài tối đa BERT).
+
+- Hàm bertify_examples:
+   + Duyệt qua danh sách các ví dụ, áp dụng preprocess_example và padding các input_ids và segment_ids.
+   + Trả về dictionary chứa:
+      + input_ids: Mảng các ID token.
+      + segment_ids: Mảng các ID phân đoạn.
+
+4. Định nghĩa hàm tính điểm:
+Hàm score_example:
+- Kiểm tra đầu vào reference:
+   + Nếu trống, báo lỗi ValueError.
+- Xử lý các câu hỏi dạng danh sách:
+   + Thay thế ký tự && bằng dấu phẩy (,).
+- Áp dụng tiền xử lý để chuyển ví dụ thành định dạng đầu vào BERT.
+- Tính logits đầu ra từ mô hình BEM (bem(inputs)).
+- Sử dụng scipy.special.softmax để tính điểm xác suất từ logits:
+   + Chọn giá trị tương ứng với lớp tích cực (class 1).
+- Nếu threshold_score=True:
+   + Trả về True nếu điểm >= 0.5, ngược lại trả về False.
+- Nếu threshold_score=False, trả về điểm số thực.
+
+5. Trả về:
+Hàm score_example.
+
+
+
+==================================================================================================
+
+
+
+FUNCTION: initialize_encyclopedic_vqa_evaluation_function(vocab_path=_VOCAB_PATH, model_path=_MODEL_PATH)
+
+
+
+Mục đích:
+Đánh giá một ví dụ VQA dạng bách khoa toàn thư (Encyclopedic-VQA) bằng cách kết hợp hai phương pháp:
+1. Exact Match (EM): Kiểm tra sự khớp chính xác giữa câu trả lời dự đoán và câu trả lời tham chiếu.
+2. BEM (BERT-based Equivalence Metric): Đánh giá sự tương đồng giữa hai câu trả lời dựa trên mô hình BERT.
+
+Đầu vào:
+- example (dict): Một ví dụ VQA chứa các thông tin:
+   + reference (str): Câu trả lời tham chiếu.
+   + candidate (str): Câu trả lời dự đoán.
+   + question_type (str): Loại câu hỏi (ví dụ: 'single_answer' hoặc 'multi_answer').
+- bem_scoring_function (function): Hàm đã khởi tạo từ initialize_bem_scoring_function để tính điểm BEM.
+
+
+Đầu ra:
+score (float): Điểm đánh giá (1.0 nếu khớp hoàn toàn hoặc tương đồng cao, 0.0 nếu không).
+
+
+Cách hoạt động:
+1. Kiểm tra tính hợp lệ của đầu vào:
+- Nếu example['reference'] trống:
+   + Báo lỗi ValueError: Reference answer cannot be empty.
+- Nếu example['question_type'] không thuộc danh sách các loại câu hỏi hợp lệ (_QUESTION_TYPES):
+   + Báo lỗi ValueError với thông báo về các loại câu hỏi hợp lệ.
+
+2. Đánh giá bằng Exact Match:
+- Gọi hàm exact_match_scoring_function(example):
+   + Trả về True nếu câu trả lời dự đoán khớp chính xác với câu trả lời tham chiếu sau khi tiền xử lý.
+- Nếu matches_exactly là True, trả về điểm 1.0.
+
+3. Đánh giá bằng BEM (nếu không khớp hoàn toàn):
+
+- Gọi bem_scoring_function(example, threshold_score=True):
+   + Tính điểm BEM và trả về True nếu điểm >= 0.5, ngược lại trả về False.
+- Nếu BEM đánh giá là tương đồng cao, trả về điểm 1.0, ngược lại trả về 0.0.
+
+
+
+
+==================================================================================================
+
+
+
+FUNCTION: encyclopedic_vqa_evaluation_function(example, bem_scoring_function)
+
+
+
+Mục đích:
+Khởi tạo và trả về một hàm đánh giá VQA dạng bách khoa (Encyclopedic-VQA).
+
+
+Đầu vào:
+vocab_path (str): Đường dẫn đến tệp từ vựng dùng để khởi tạo tokenizer.
+model_path (str): Đường dẫn đến mô hình BERT-based Equivalence Metric (BEM).
+
+
+Đầu ra:
+Hàm đánh giá encyclopedic_vqa_evaluation_function được thiết lập sẵn với BEM scoring function.
+
+
+Cách hoạt động:
+1. Khởi tạo hàm BEM scoring:
+Gọi initialize_bem_scoring_function(vocab_path, model_path) để tạo ra hàm tính điểm BEM.
+
+2. Kết hợp với hàm đánh giá Encyclopedic-VQA:
+Sử dụng functools.partial để gắn cố định đối số bem_scoring_function vào hàm
+encyclopedic_vqa_evaluation_function.
+
+3. Kích hoạt cơ chế cache:
+Dùng @functools.cache để lưu trữ kết quả khởi tạo, tránh việc tái khởi tạo không cần thiết
+ở các lần gọi sau.
+
+
+
+==================================================================================================
+
+
+
+FUNCTION: evaluate_example(question, reference_list, candidate, question_type,)
+
+
+
+Mục đích:
+Tính điểm đánh giá tối đa cho một câu trả lời dự đoán (candidate) khi so sánh với một danh sách câu trả lời tham chiếu (reference_list) cho một câu hỏi (question).
+
+
+Đầu vào:
+question (str): Văn bản của câu hỏi.
+reference_list (list of str): Danh sách câu trả lời tham chiếu.
+candidate (str): Câu trả lời dự đoán cần đánh giá.
+question_type (str): Loại câu hỏi (ví dụ: 'single_answer', 'multi_answer').
+
+
+Đầu ra:
+max_score (float): Điểm số cao nhất khi đánh giá câu trả lời dự đoán với tất cả các câu trả lời tham chiếu.
+
+Cách hoạt động:
+1. Kiểm tra tính hợp lệ của danh sách tham chiếu:
+Nếu reference_list rỗng, báo lỗi ValueError: Reference list cannot be empty.
+
+2. Khởi tạo hàm đánh giá:
+Gọi initialize_encyclopedic_vqa_evaluation_function() để lấy hàm đánh giá VQA.
+
+3. Tính điểm cho từng câu trả lời tham chiếu:
+
+- Duyệt qua từng câu trả lời trong reference_list:
+   + Tạo một example (dictionary) chứa thông tin về câu hỏi, câu trả lời tham chiếu, câu trả lời dự đoán, và loại câu hỏi.
+   + Gọi hàm đánh giá (scoring_function) để tính điểm cho example.
+- Thêm điểm vào danh sách scores.
+
+4. Trả về điểm số cao nhất:
+Tìm giá trị lớn nhất trong danh sách scores và trả về.
+
+
+
+==================================================================================================
+
+
+
+FUNCTION: main(prediction_path: str, reference_path: str)
+
+
+
+Mục đích:
+Hàm chính để đánh giá dự đoán (predictions) so với tham chiếu (references),
+tính các chỉ số như Exact Match, F1, và BEM Score.
+
+
+
+Đầu vào:
+prediction_path (str): Đường dẫn đến file JSON chứa các dự đoán.
+reference_path (str): Đường dẫn đến dữ liệu tham chiếu (reference) đã lưu trên đĩa.
+
+
+Đầu ra:
+In ra bảng kết quả trung bình của các chỉ số, theo từng loại câu trả lời và toàn bộ dữ liệu.
+
+
+Cách hoạt động:
+1. Tải dữ liệu:
+Mở file prediction_path để tải danh sách các dự đoán (predictions).
+Gọi hàm load_from_disk(reference_path) để tải danh sách tham chiếu (reference).
+
+2. Kiểm tra tính hợp lệ:
+Đảm bảo độ dài của predictions và reference bằng nhau bằng cách sử dụng assert.
+
+3. Tính điểm cho từng dự đoán:
+Sử dụng vòng lặp zip(predictions, reference) và thư viện tqdm để tính điểm cho từng cặp dự đoán và tham chiếu:
+Lấy câu trả lời tham chiếu (ground_truths) và loại câu trả lời (answer_type) từ đối tượng tham chiếu.
+Tính điểm Exact Match bằng hàm metric_max_over_ground_truths(exact_match_score, pred, ground_truths).
+Tính điểm F1 bằng hàm metric_max_over_ground_truths(f1_score, pred, ground_truths).
+Tính điểm BEM bằng hàm evaluate_example(item['input'], ground_truths, pred, answer_type).
+Lưu điểm của từng mẫu vào danh sách scores.
+
+4. Chuyển đổi danh sách điểm thành DataFrame:
+Chuyển đổi danh sách scores thành DataFrame scores để thuận tiện cho tính toán.
+
+5. Tính điểm trung bình:
+Tính điểm trung bình cho toàn bộ dữ liệu bằng scores.mean(numeric_only=True).add_prefix("overall-").
+Tính điểm trung bình theo từng loại câu trả lời (answer_type) bằng cách nhóm scores theo answer_type và gọi .mean().
+Tính điểm trung bình riêng cho loại câu hỏi "single-hop, single-answer" bằng cách ghép kết quả của các loại câu trả lời như 'templated' và 'automatic'.
+
+6. Tạo bảng kết quả:
+Ghép tất cả các kết quả trung bình thành một DataFrame average_scores.
+In bảng kết quả ra màn hình.
+Xuất bảng sang định dạng LaTeX bằng cách sử dụng to_latex.
+
+
+
+==================================================================================================
+
+
+if __name__ == "__main__":
+Sử dụng CLI(main) để tích hợp hàm main vào giao diện dòng lệnh, cho phép chạy chương trình bằng các tham số từ dòng lệnh.

@@ -1,0 +1,883 @@
+==================================================================================================
+
+
+Đánh giá và so sánh độ chính xác của các dự đoán được tạo ra bởi mô hình (các dự đoán từ hệ thống AI hoặc ML)
+với các câu trả lời đúng trong một bộ dữ liệu tham chiếu. Đánh giá này được thực hiện thông qua ba loại
+câu hỏi chính: thời gian (time), số lượng (quantity), và thực thể (entity). Cụ thể:
+
+1. Mục đích chính:
+
+Đo lường độ chính xác của các dự đoán từ hệ thống AI so với các câu trả lời tham chiếu từ bộ dữ liệu.
+Phân loại câu hỏi theo ba nhóm chính: thời gian, số lượng và thực thể, và áp dụng các tiêu chí đánh giá khác nhau cho từng nhóm.
+Cung cấp một hệ thống tự động để tính toán điểm số, từ đó giúp đánh giá hiệu suất của mô hình trên các loại câu hỏi khác nhau.
+
+2. Cách thức hoạt động:
+
+Đầu vào là các dự đoán từ mô hình (dưới dạng tệp JSONL hoặc các đối tượng dữ liệu khác) và các câu trả lời đúng từ bộ dữ liệu tham chiếu.
+Mã phân loại câu hỏi theo loại (thời gian, số lượng, thực thể), sau đó đánh giá mỗi loại câu hỏi bằng các hàm cụ thể.
+Các tiêu chí đánh giá bao gồm việc so sánh độ chính xác của năm (cho câu hỏi về thời gian), phạm vi giá trị (cho câu hỏi về số lượng), và sự khớp giữa các thực thể (cho câu hỏi về thực thể).
+Mã cũng cung cấp các tính toán điểm số cuối cùng cho từng loại câu hỏi, cũng như điểm số tổng thể (đánh giá mô hình).
+
+3. Ứng dụng:
+
+Đánh giá độ chính xác của các mô hình AI trong các bài toán có liên quan đến câu hỏi và trả lời, đặc biệt là trong các bài toán mà câu hỏi yêu cầu mô hình trả lời với thông tin thời gian, số lượng hoặc thực thể.
+Hỗ trợ trong việc phân tích và so sánh các kết quả từ mô hình AI trong các thử nghiệm hoặc nghiên cứu.
+
+4. Lợi ích:
+
+Cung cấp một cách thức rõ ràng và tự động để đo lường hiệu suất của mô hình.
+Có thể áp dụng cho các bộ dữ liệu và mô hình khác nhau, từ đó giúp theo dõi và cải thiện chất lượng dự đoán.
+Cung cấp báo cáo kết quả chi tiết và dễ hiểu, có thể dùng cho mục đích phân tích và nghiên cứu.
+
+
+
+==================================================================================================
+
+
+
+CLASS: QuestionType
+
+
+
+1. Mục đích:
+Lớp QuestionType định nghĩa một kiểu liệt kê (Enum) dùng để phân loại các loại câu hỏi: String (câu hỏi kiểu chuỗi),
+Numerical (câu hỏi số học), và Time (câu hỏi về thời gian).
+Giúp xác định loại câu hỏi để áp dụng các phương pháp đánh giá phù hợp.
+
+2. Giải thích code:
+enum.Enum cho phép tạo ra một tập hợp các giá trị hằng số có tên. Mỗi giá trị trong QuestionType có một tên và giá trị tương ứng:
+String có giá trị 0.
+Numerical có giá trị 1.
+Time có giá trị 2
+
+5. Ví dụ minh họa:
+question_type = QuestionType.String
+print(question_type)  # Output: QuestionType.String
+print(question_type.value)  # Output: 0
+
+
+
+==================================================================================================
+
+
+
+FUNCTION: in_range(number: float, range_list: Tuple[float, float]) -> bool
+
+
+
+1. Mục đích:
+Hàm này kiểm tra xem một số (number) có nằm trong phạm vi cho trước (range_list) hay không.
+
+2. Input:
+number (float): Số cần kiểm tra.
+range_list (Tuple[float, float]): Phạm vi bao gồm 2 số: giá trị nhỏ nhất và lớn nhất của phạm vi.
+
+3. Output:
+Trả về True nếu number nằm trong phạm vi (bao gồm cả biên giới).
+Trả về False nếu không nằm trong phạm vi.
+
+4. Giải thích code:
+Hàm sử dụng toán tử so sánh để kiểm tra xem number có nằm trong phạm vi từ min_num đến max_num hay không.
+Phạm vi là bao gồm (inclusive), nghĩa là min_num và max_num đều được tính là hợp lệ.
+
+5. Ví dụ minh họa:
+print(in_range(5, (1, 10)))  # Output: True
+print(in_range(15, (1, 10)))  # Output: False
+
+
+
+==================================================================================================
+
+
+
+
+FUNCTION: safe_division(x: float, y: float) -> float:
+
+
+
+1. Mục đích:
+Hàm này thực hiện phép chia an toàn giữa hai số x và y, đảm bảo không xảy ra lỗi chia cho 0. Nếu y bằng 0, kết quả trả về sẽ là 0 thay vì gây lỗi.
+
+2. Input:
+x (float): Số chia.
+y (float): Số bị chia.
+
+3. Output:
+Trả về giá trị x / y nếu y khác 0.
+Trả về 0 nếu y bằng 0.
+
+4. Giải thích code:
+Hàm sử dụng toán tử điều kiện if để kiểm tra giá trị của y. Nếu y khác 0, nó thực hiện phép chia bình thường.
+Nếu y bằng 0, nó trả về 0 thay vì gây ra lỗi.
+
+5. Ví dụ minh họa:
+print(safe_division(10, 2))  # Output: 5.0
+print(safe_division(10, 0))  # Output: 0
+
+
+
+==================================================================================================
+
+
+
+
+FUNCTION: metric_numerical_range(
+            pred: Union[float, Tuple[float, float], List[float]],
+            answer: Union[float, Tuple[float, float], List[float]],
+            tolerance: float = 0.1,
+          ) -> int:
+
+
+
+1. Mục đích:
+Hàm này dùng để đánh giá các câu hỏi có liên quan đến số học, dựa trên phạm vi số và độ chính xác cho phép (tolerance).
+Cụ thể, hàm kiểm tra xem dự đoán của mô hình có đúng với câu trả lời dựa trên các phạm vi và độ lệch cho phép hay không.
+
+2. Input:
+pred (Union[float, Tuple[float, float], List[float]]): Đây là giá trị dự đoán. Nó có thể là một số đơn lẻ (float),
+hoặc một phạm vi số học dưới dạng tuple hoặc list (ví dụ: (start, end)).
+
+answer (Union[float, Tuple[float, float], List[float]]): Đây là câu trả lời đúng. Tương tự như pred,
+nó có thể là một số đơn lẻ (float), hoặc một phạm vi dưới dạng tuple hoặc list.
+
+tolerance (float, default = 0.1): Đây là độ lệch cho phép (tolerance) khi so sánh giá trị số học.
+Được sử dụng khi câu trả lời là một số đơn lẻ (khi answer là số đơn, phạm vi câu trả lời sẽ được điều chỉnh với độ lệch này). Mặc định là 0.1.
+
+3. Output:
+int: Trả về 1 nếu dự đoán của mô hình đúng theo các điều kiện đã mô tả, ngược lại trả về 0.
+
+4. Giải thích code:
+- Xử lý input:
+Đầu tiên, hàm chuyển đổi câu trả lời và dự đoán thành dạng list nếu chúng là tuple, giúp dễ dàng thao tác khi so sánh các giá trị.
+Nếu câu trả lời là một số đơn lẻ, nó sẽ được chuyển thành một phạm vi với độ lệch cho phép (tolerance).
+
+- Xử lý trường hợp dự đoán là số đơn lẻ:
+Nếu dự đoán là số đơn lẻ, hàm kiểm tra xem số này có nằm trong phạm vi câu trả lời (đã điều chỉnh với tolerance) không. Nếu có, trả về 1, nếu không, trả về 0.
+
+- Xử lý trường hợp dự đoán là phạm vi:
+Nếu dự đoán là phạm vi, hàm kiểm tra xem phạm vi dự đoán có nằm hoàn toàn trong phạm vi câu trả lời không.
+Nếu không, hàm tính toán IoU (Intersection over Union) để so sánh mức độ giao nhau giữa hai phạm vi. Nếu IoU lớn hơn hoặc bằng 0.5, hàm trả về 1, ngược lại trả về 0.
+
+5. Ví dụ minh họa:
+- Trường hợp 1: pred là số đơn, answer là số đơn.
+pred = 5.0, answer = 4.9, tolerance = 0.1
+Câu trả lời sau khi áp dụng độ lệch sẽ là [4.9, 5.1].
+Dự đoán 5.0 nằm trong phạm vi [4.9, 5.1], vì vậy trả về 1.
+
+- Trường hợp 2: pred là phạm vi, answer là phạm vi.
+pred = [4.5, 5.0], answer = [4.8, 5.2]
+Phạm vi dự đoán [4.5, 5.0] không nằm hoàn toàn trong phạm vi câu trả lời [4.8, 5.2].
+Tính toán IoU:
+Phần giao nhau giữa hai phạm vi là [4.8, 5.0], diện tích giao nhau là 0.2.
+Diện tích hợp nhất là [4.5, 5.2], diện tích hợp nhất là 0.7.
+IoU = 0.2 / 0.7 ≈ 0.2857.
+IoU nhỏ hơn 0.5, vì vậy trả về 0.
+
+
+
+
+==================================================================================================
+
+
+
+
+FUNCTION: find_numbers(string_number: str) -> List[float]:
+
+
+
+1. Mục đích:
+Hàm này dùng để tìm và trích xuất các số trong một chuỗi văn bản (dạng string), đồng thời loại bỏ các ký tự không
+cần thiết như dấu phẩy và dấu chấm không hợp lệ.
+
+2. Input:
+string_number: Một chuỗi văn bản chứa các số mà chúng ta muốn trích xuất.
+
+3. Output:
+Trả về một tuple gồm hai phần:
+numerical_numbers: Danh sách các số dưới dạng float, là kết quả đã được làm sạch.
+numerical_numbers_tmp: Danh sách các số dưới dạng chuỗi ban đầu, chưa qua xử lý
+
+4. Giải thích code:
+Đầu tiên, chuỗi string_number được làm sạch bằng cách gọi hàm clean_str_range (chưa rõ chi tiết hàm này, nhưng nó có thể loại bỏ những ký tự hoặc phần không cần thiết).
+Hàm sử dụng biểu thức chính quy re.findall để tìm các dãy số trong chuỗi. Biểu thức này tìm các số với các đặc điểm sau:
+Có thể có dấu cộng hoặc trừ.
+Có thể có phần thập phân, bao gồm dấu chấm hoặc dấu phẩy ngăn cách hàng nghìn.
+Có thể có phần mũ (scientific notation).
+Sau khi tìm được các dãy số (dưới dạng chuỗi), hàm sẽ xử lý để chuyển thành kiểu float và loại bỏ dấu phẩy trong các số có phân cách hàng nghìn.
+Nếu một số có nhiều dấu chấm thập phân, chỉ lấy phần đầu tiên và chuyển về dạng số.
+
+5. Ví dụ minh họa:
+Input: "1234.56, 78.9, 1e3"
+Output:
+numerical_numbers = [1234.56, 78.9, 1000.0]
+numerical_numbers_tmp = ['1234.56', '78.9', '1e3']
+
+
+
+
+==================================================================================================
+
+
+
+
+FUNCTION: process_numerical_answer(string_number: str) -> Union[float, List[float]]:
+
+
+
+
+1. Mục đích:
+Hàm này xử lý chuỗi đại diện cho một câu trả lời số học, trích xuất các giá trị số từ chuỗi,
+và trả về một số đơn hoặc một phạm vi số (dưới dạng danh sách hai phần tử).
+
+2. Input:
+string_number: Một chuỗi văn bản chứa một hoặc nhiều số, có thể là một dãy số đơn hoặc dãy số với hai giá trị (phạm vi).
+
+3. Output:
+Trả về một số đơn nếu chuỗi chứa một số duy nhất.
+Trả về một danh sách hai giá trị nếu chuỗi chứa hai số (phạm vi).
+Nếu không tìm thấy số hợp lệ, trả về [0, 0].
+
+4. Giải thích code:
+Hàm gọi find_numbers để trích xuất các số trong chuỗi.
+Sau đó, hàm kiểm tra số lượng số tìm được:
+Nếu có nhiều hơn 2 số, chỉ giữ lại hai số đầu tiên.
+Nếu có đúng 2 số, hàm sẽ kiểm tra xem giá trị đầu có nhỏ hơn hoặc bằng giá trị thứ hai không, nếu không thì chỉ trả về giá trị đầu tiên (kết quả duy nhất là một số).
+Nếu có một số, trả về số đó.
+Nếu không có số nào, trả về [0, 0].
+
+5. Ví dụ minh họa:
+Input: "10, 20"
+Output: [10, 20]
+Input: "5"
+Output: 5
+Input: "not a number"
+Output: [0, 0]
+
+
+
+
+==================================================================================================
+
+
+
+
+FUNCTION: find_all(s: str, c: str) -> Generator[int, None, None]:
+
+
+
+
+1. Mục đích:
+Hàm này tìm tất cả các vị trí (chỉ số) của một ký tự trong một chuỗi và trả về các chỉ số đó.
+
+2. Input:
+s: Chuỗi văn bản mà ta muốn tìm kiếm.
+c: Ký tự mà ta muốn tìm kiếm trong chuỗi.
+
+3. Output:
+Trả về một generator (generator là một đối tượng có thể lặp lại giá trị mà không cần lưu tất cả vào bộ nhớ),
+mỗi giá trị là chỉ số của sự xuất hiện tiếp theo của ký tự c trong chuỗi s.
+
+4. Giải thích code:
+Hàm sử dụng phương thức find để tìm vị trí đầu tiên của ký tự trong chuỗi s.
+Sau đó, một vòng lặp while được sử dụng để tiếp tục tìm kiếm ký tự c trong chuỗi từ vị trí tiếp theo
+(sau mỗi lần tìm thấy, nó sẽ tìm kiếm tiếp từ vị trí tiếp theo).
+Nếu không tìm thấy ký tự, phương thức find sẽ trả về -1 và vòng lặp sẽ dừng lại.
+
+5. Ví dụ minh họa:
+Input: s = "hello world", c = "o"
+Output: [4, 7] (Vì ký tự 'o' xuất hiện ở vị trí 4 và 7 trong chuỗi).
+
+
+
+
+==================================================================================================
+
+
+
+
+FUNCTION: clean_str_range(text: str) -> str:
+
+
+
+
+1. Mục đích:
+Hàm này dùng để làm sạch các biểu thức phạm vi trong một chuỗi văn bản. Cụ thể, nó thêm khoảng trắng xung quanh
+dấu gạch ngang ('-') trong các biểu thức phạm vi (ví dụ: '9-10' sẽ trở thành '9 - 10').
+
+2. Input:
+text: Một chuỗi văn bản chứa các biểu thức phạm vi, có thể có dấu gạch ngang không có khoảng trắng xung quanh.
+
+3. Output:
+Trả về một chuỗi văn bản đã được làm sạch, với các dấu gạch ngang được đặt có khoảng trắng xung quanh.
+
+4. Giải thích code:
+Hàm gọi find_all để tìm tất cả các vị trí của dấu gạch ngang ('-') trong chuỗi text.
+Sau đó, nó kiểm tra xem mỗi dấu gạch ngang có phải là một phần của một biểu thức phạm vi (dấu gạch ngang này đứng sau một chữ số không).
+Nếu điều kiện này đúng, dấu gạch ngang sẽ được thay thế bằng ' - ' (bao gồm khoảng trắng).
+Cuối cùng, hàm trả về chuỗi đã được làm sạch.
+
+5. Ví dụ minh họa:
+Input: "9-10"
+Output: "9 - 10"
+Input: "1-2, 4-5"
+Output: "1 - 2, 4 - 5"
+
+
+
+
+==================================================================================================
+
+
+
+
+FUNCTION: range_intersection_over_union(x_list: List[float], y_list: List[float]) -> float:
+
+
+
+
+1. Mục đích:
+Hàm này tính toán chỉ số giao nhau trên hợp (Intersection over Union - IOU) giữa hai phạm vi số.
+
+2. Input:
+x_list: Danh sách chứa 2 số đại diện cho phạm vi đầu tiên.
+y_list: Danh sách chứa 2 số đại diện cho phạm vi thứ hai.
+
+3. Output:
+Trả về giá trị IOU, một giá trị thực trong khoảng [0, 1] thể hiện mức độ giao nhau giữa hai phạm vi.
+
+4. Giải thích code:
+Hàm xác định các giá trị min và max cho từng phạm vi (x và y) để biết được phạm vi của mỗi chuỗi.
+Sau đó, hàm tính toán độ chồng lấp (overlap) giữa hai phạm vi. Độ chồng lấp là chiều dài của phần giao nhau giữa hai phạm vi.
+Nếu không có sự chồng lấp, overlap sẽ bằng 0.
+Cuối cùng, hàm tính toán IOU, đây là tỷ lệ giữa độ chồng lấp và tổng chiều dài của cả hai phạm vi, được tính bằng công thức:
+IOU = overlap / (lengthx + lengthy - overlap)
+safe_division được dùng để đảm bảo tránh chia cho 0 (khi có phạm vi có độ dài bằng 0).
+
+5. Ví dụ minh họa:
+Input: x_list = [5, 10], y_list = [8, 12]
+Phạm vi x_list là từ 5 đến 10, và y_list là từ 8 đến 12.
+Giao nhau giữa hai phạm vi này là từ 8 đến 10, tức là độ chồng lấp là 2.
+Tổng chiều dài của cả hai phạm vi là 10−5+12-8=9
+IOU sẽ là 2/9 ≈ 0.22
+
+
+
+
+==================================================================================================
+
+
+
+
+FUNCTION: evaluate_quantity(quantity_pred: List[Union[float, List[float]]], quantity_answer: List[List[float]],) -> List[int]:
+
+
+
+
+1. Mục đích:
+Đánh giá dự đoán số học (numerical predictions) so với các câu trả lời đúng bằng cách sử dụng tiêu chí phạm vi số (numerical range).
+
+2. Input:
+quantity_pred: Danh sách các dự đoán số học, mỗi dự đoán có thể là một số hoặc một danh sách biểu thị phạm vi.
+quantity_answer: Danh sách các câu trả lời đúng, mỗi câu trả lời là danh sách chứa hai số biểu thị phạm vi đúng.
+
+3. Output:
+Trả về một danh sách số nguyên, với mỗi giá trị là 1 (nếu dự đoán đúng) hoặc 0 (nếu sai).
+
+4. Giải thích code:
+Hàm sử dụng vòng lặp for với zip để ghép từng cặp dự đoán và câu trả lời.
+Gọi hàm metric_numerical_range cho từng cặp dự đoán và câu trả lời để kiểm tra mức độ khớp theo phạm vi số.
+
+5. Ví dụ minh họa:
+Input:
+quantity_pred = [[5, 10], 7], quantity_answer = [[6, 9], [5, 8]]
+Output:
+[1, 1] (Dự đoán đầu tiên khớp theo phạm vi, dự đoán thứ hai nằm trong khoảng [5, 8]).
+
+
+
+
+==================================================================================================
+
+
+
+
+FUNCTION: evaluate_entity(entity_pred: List[str], entity_answer: List[List[str]]) -> List[int]:
+
+
+
+
+1. Mục đích:
+Đánh giá dự đoán dạng thực thể (entity predictions) so với các câu trả lời đúng bằng cách kiểm tra mức độ khớp chính xác (exact match).
+
+2. Input:
+entity_pred: Danh sách các chuỗi dự đoán.
+entity_answer: Danh sách các danh sách chuỗi câu trả lời đúng.
+
+3. Output:
+Trả về danh sách số nguyên, với mỗi giá trị là 1 (nếu khớp chính xác) hoặc 0 (nếu không).
+
+4. Giải thích code:
+Dùng vòng lặp với zip để ghép từng dự đoán với câu trả lời tương ứng.
+Gọi metric_max_over_ground_truths để kiểm tra dự đoán với tất cả câu trả lời đúng liên quan và chọn kết quả cao nhất.
+exact_match_score được dùng để kiểm tra xem một chuỗi dự đoán có khớp chính xác với một câu trả lời hay không.
+
+5. Ví dụ minh họa:
+Input:
+entity_pred = ["Paris", "Eiffel Tower"], entity_answer = [["Paris"], ["Eiffel"]]
+Output:
+[1, 0] (Dự đoán đầu tiên khớp chính xác, dự đoán thứ hai không khớp).
+
+
+
+
+==================================================================================================
+
+
+
+
+FUNCTION: evaluate_time(time_pred: List[str], time_answer: List[List[str]]) -> List[int]:
+
+
+
+
+1. Mục đích:
+Đánh giá dự đoán dạng thời gian (time predictions) dựa trên tiêu chí:
+Nếu thời gian dự đoán và câu trả lời chênh lệch trong khoảng ±1 năm thì đúng.
+Nếu câu hỏi yêu cầu ngày tháng, nhưng năm dự đoán chính xác thì đúng.
+
+2. Input:
+time_pred: Danh sách các chuỗi dự đoán thời gian.
+time_answer: Danh sách các danh sách chuỗi câu trả lời đúng.
+
+3. Output:
+Trả về danh sách số nguyên, với mỗi giá trị là 1 (nếu đúng) hoặc 0 (nếu sai).
+
+4. Giải thích code:
+Hàm chỉ đơn giản gọi evaluate_entity vì bản chất đánh giá thời gian và thực thể đều sử dụng tiêu chí mức độ khớp chính xác.
+
+5. Ví dụ minh họa:
+Input:
+time_pred = ["2023"], time_answer = [["2023", "2024"]]
+Output:
+[1] (Năm 2023 nằm trong các câu trả lời đúng).
+
+
+
+
+==================================================================================================
+
+
+
+
+FUNCTION: evaluation(predictions: List[Dict[str, Any]], qid2example: Dict[str, Dict[str, Any]]) -> Tuple[List[int], List[int], List[int]]:
+
+
+
+
+1. Mục đích:
+Phân loại câu hỏi thành ba loại (Time, Numerical, Entity), sau đó đánh giá từng loại dựa trên các tiêu chí riêng.
+
+2. Input:
+- predictions: Danh sách các dự đoán, mỗi phần tử chứa:
+   + data_id: ID của dữ liệu câu hỏi.
+   + prediction: Dự đoán của mô hình.
+- qid2example: Bản đồ ánh xạ từ ID câu hỏi sang các câu trả lời đúng và loại câu hỏi (Time, Numerical, Entity).
+
+3. Output:
+Trả về một bộ ba danh sách:
+score_time: Điểm đánh giá cho các câu hỏi dạng thời gian.
+score_quantity: Điểm đánh giá cho các câu hỏi dạng số học.
+score_entity: Điểm đánh giá cho các câu hỏi dạng thực thể.
+
+4. Giải thích code:
+- Phân loại câu hỏi:
+Dựa vào loại câu hỏi (question_type), hàm phân loại các dự đoán và câu trả lời thành ba nhóm:
+time_pred và time_answer cho câu hỏi thời gian.
+quantity_pred và quantity_answer cho câu hỏi số học.
+entity_pred và entity_answer cho câu hỏi thực thể.
+Nếu loại là Numerical, chuỗi dự đoán được chuyển đổi thành phạm vi số bằng process_numerical_answer.
+- Đánh giá:
+Gọi các hàm đánh giá tương ứng (evaluate_time, evaluate_quantity, evaluate_entity) để tính điểm cho từng loại câu hỏi.
+- Kết quả:
+Trả về danh sách điểm số cho từng nhóm câu hỏi.
+
+5. Ví dụ minh họa:
+Input:
+predictions = [
+    {'data_id': 'q1', 'prediction': '2023'},
+    {'data_id': 'q2', 'prediction': '5-10'},
+    {'data_id': 'q3', 'prediction': 'Paris'}
+]
+qid2example = {
+    'q1': {'answer_eval': ['2022', '2023'], 'question_type': 'Time'},
+    'q2': {'answer_eval': [6, 9], 'question_type': 'Numerical'},
+    'q3': {'answer_eval': ['Paris'], 'question_type': 'Entity'}
+}
+
+Output:
+([1], [1], [1])
+(Dự đoán khớp với các câu trả lời cho tất cả các loại câu hỏi).
+
+
+
+==================================================================================================
+
+
+
+FUNCTION: get_results(
+    predictions: List[Dict[str, Any]], qid2example: Dict[str, Dict[str, Any]]
+    ) -> Tuple[float, float, float, float]:
+
+
+
+1. Mục đích:
+Tính toán các điểm đánh giá (scores) cuối cùng cho từng loại câu hỏi (time, quantity, entity) và tổng thể (overall).
+
+2. Input:
+- predictions: Danh sách các dự đoán, mỗi dự đoán chứa:
+   + data_id: ID của câu hỏi.
+   + prediction: Dự đoán của mô hình.
+- qid2example: Bản đồ ánh xạ từ ID câu hỏi tới câu trả lời đúng và loại câu hỏi.
+
+3. Output:
+Tuple gồm 4 giá trị float:
+final_score: Điểm tổng hợp (overall).
+final_score_time: Điểm đánh giá cho câu hỏi thời gian.
+final_score_quantity: Điểm đánh giá cho câu hỏi số học.
+final_score_entity: Điểm đánh giá cho câu hỏi thực thể.
+
+4. Giải thích code:
+Gọi hàm evaluation để phân loại câu hỏi và tính điểm cho từng loại (score_time, score_quantity, score_entity).
+Sử dụng safe_division để tính điểm trung bình cho từng loại:
+final_score_time = sum(score_time) / len(score_time)
+final_score_quantity = sum(score_quantity) / len(score_quantity)
+final_score_entity = sum(score_entity) / len(score_entity)
+Tính điểm tổng hợp (final_score) bằng cách chia tổng điểm của tất cả loại câu hỏi cho tổng số câu hỏi.
+
+5. Ví dụ minh họa:
+Input:
+predictions = [{'data_id': 'q1', 'prediction': '2023'}, ...]
+qid2example = {'q1': {'answer_eval': ['2023'], 'question_type': 'Time'}, ...}
+
+Output:
+(0.83, 0.9, 0.8, 0.8) (Điểm tổng hợp là 0.83, điểm thời gian là 0.9, v.v.).
+
+
+
+==================================================================================================
+
+
+
+FUNCTION: harmonic_mean(*args: float) -> float:
+
+
+
+1. Mục đích:
+Tính trung bình điều hòa (harmonic mean) của các số đầu vào.
+
+2. Input:
+args: Danh sách các số (float).
+
+3. Output:
+Một giá trị float là trung bình điều hòa.
+
+4. Giải thích code:
+Thay các giá trị 0 trong danh sách bằng một giá trị nhỏ (1e-12) để tránh lỗi chia cho 0.
+Tính trung bình điều hòa bằng công thức:
+H  = n / [SUM i=1 - > n (1/xi)]
+với n là số phần tử trong danh sách và xi là giá trị từng phần tử.
+
+5. Ví dụ minh họa:
+Input:
+[0.8, 0.9, 1.0]
+Output:
+0.89 (Trung bình điều hòa của 0.8, 0.9, 1.0).
+
+
+
+==================================================================================================
+
+
+
+FUNCTION: evaluate_infoseek(predictions: List[Dict[str, Any]], qid2example: Dict[str, Dict[str, Any]]) -> Dict[str, float]:
+
+
+
+1. Mục đích:
+Tính toán các điểm đánh giá cuối cùng cho mô hình dựa trên các dự đoán và câu trả lời tham chiếu.
+
+2. Input:
+predictions: Danh sách các dự đoán.
+qid2example: Bản đồ ánh xạ từ ID câu hỏi tới các câu trả lời đúng và loại câu hỏi.
+
+3. Output:
+Một từ điển (dict) chứa các điểm đánh giá:
+score: Điểm tổng hợp (overall) tính theo phần trăm.
+score_time, score_num, score_string: Điểm đánh giá cho các loại câu hỏi thời gian, số học, và thực thể, tính theo phần trăm.
+
+4. Giải thích code:
+Gọi hàm get_results để tính các điểm đánh giá thô (theo tỷ lệ 0-1).
+Nhân các điểm này với 100 và làm tròn tới 2 chữ số thập phân để đưa về tỷ lệ phần trăm.
+Trả về một từ điển với các điểm đánh giá được định dạng.
+
+5. Ví dụ minh họa:
+Input:
+predictions = [{'data_id': 'q1', 'prediction': '2023'}, ...]
+qid2example = {'q1': {'answer_eval': ['2023'], 'question_type': 'Time'}, ...}
+Output:
+{'score': 83.33, 'score_time': 90.0, 'score_num': 80.0, 'score_string': 80.0}
+
+
+
+
+==================================================================================================
+
+
+
+FUNCTION: evaluate_infoseek_full(
+    predictions: Dict[str,List[Dict[str, Any]]],
+    qid2example: Dict[str, Dict[str, Any]],
+    ) -> Dict[str, Any]:
+
+
+
+1. Mục đích:
+Đánh giá toàn diện các dự đoán trên nhiều tập dữ liệu (split) và tính điểm tổng hợp cuối cùng.
+
+2. Input:
+predictions: Một từ điển chứa các dự đoán cho từng tập dữ liệu (split).
+qid2example: Bản đồ ánh xạ từ ID câu hỏi tới các câu trả lời đúng.
+
+3. Output:
+Một từ điển (dict) chứa:
+final_score: Điểm tổng hợp cuối cùng (tính bằng trung bình điều hòa).
+unseen_question_score: Điểm của tập dữ liệu unseen_question.
+unseen_entity_score: Điểm của tập dữ liệu unseen_entity.
+
+4. Giải thích code:
+- Đánh giá từng tập dữ liệu (split):
+Duyệt qua từng split và gọi evaluate_infoseek để tính điểm cho tập dữ liệu đó.
+Lưu kết quả vào từ điển infoseek_score.
+Thêm thông tin tên split vào từng kết quả.
+- Tính trung bình điều hòa:
+Lấy điểm tổng hợp (score) của tất cả các split và tính trung bình điều hòa bằng hàm harmonic_mean.
+- In báo cáo:
+In ra bảng LaTeX từ các điểm số để hỗ trợ báo cáo.
+- Trả về kết quả:
+Gồm điểm tổng hợp cuối cùng và điểm chi tiết cho các tập unseen_question và unseen_entity.
+
+5. Ví dụ minh họa:
+Input:
+predictions = {
+    'train': [{'data_id': 'q1', 'prediction': '2023'}, ...],
+    'unseen_question': [{'data_id': 'q2', 'prediction': '5-10'}, ...],
+    'unseen_entity': [{'data_id': 'q3', 'prediction': 'Paris'}, ...],
+}
+qid2example = {...}
+Output:
+{
+    'final_score': 85.0,
+    'unseen_question_score': {'score': 80.0, 'score_time': 85.0, ...},
+    'unseen_entity_score': {'score': 90.0, 'score_time': 95.0, ...},
+}
+
+
+
+
+==================================================================================================
+
+
+
+FUNCTION: fix_space(string):
+
+
+
+1. Mục đích:
+Loại bỏ khoảng trắng không mong muốn trong các số có dấu phân cách thập phân hoặc dấu phẩy, ví dụ:
+Biểu thức "1, 234" sẽ được chuyển thành "1,234".
+Biểu thức "3. 14" sẽ được chuyển thành "3.14".
+
+2. Input:
+string: Chuỗi văn bản đầu vào.
+
+3. Output:
+Chuỗi văn bản sau khi đã loại bỏ khoảng trắng sai lệch.
+
+4. Giải thích code:
+Sử dụng biểu thức chính quy: (\d+[\.,]) (\d+)
+\d+: Một hoặc nhiều chữ số.
+[\.,]: Dấu chấm hoặc dấu phẩy.
+( ): Khoảng trắng giữa hai nhóm.
+(\d+): Một hoặc nhiều chữ số sau khoảng trắng.
+Thay thế mẫu khớp bằng: \1\2
+\1: Nhóm đầu tiên (số và dấu phân cách).
+\2: Nhóm số sau khoảng trắng.
+
+5. Ví dụ minh họa:
+fix_space("3. 14159")  # Kết quả: "3.14159"
+fix_space("1, 234")    # Kết quả: "1,234"
+
+
+
+
+==================================================================================================
+
+
+
+FUNCTION: evaluate(
+        prediction_path: Union[str, List[str]],
+        reference_path: Union[str, Dataset],
+        do_fix_space: bool = False
+    ) -> Dict[str, Any]:
+
+
+
+1. Mục đích:
+So sánh các dự đoán của mô hình với các câu trả lời tham chiếu để đánh giá hiệu suất. Hàm này bao gồm:
+
+Đọc và chuẩn bị dữ liệu từ file dự đoán (prediction_path) và file tham chiếu (reference_path).
+Tách dự đoán thành hai tập dữ liệu (unseen_question và unseen_entity).
+Tính toán các điểm số thông qua hàm evaluate_infoseek_full.
+
+2. Input:
+prediction_path: Đường dẫn tới file chứa các dự đoán hoặc danh sách các dự đoán.
+reference_path: Đường dẫn tới file tham chiếu hoặc tập dữ liệu (Dataset).
+do_fix_space: Flag (True/False) cho phép sửa lỗi khoảng trắng trong dự đoán.
+
+3. Output:
+Một từ điển (dict) chứa các điểm số:
+final_score: Điểm tổng hợp (overall).
+unseen_question_score: Điểm số cho tập unseen_question.
+unseen_entity_score: Điểm số cho tập unseen_entity.
+
+4. Giải thích code:
+- Chuẩn bị dữ liệu tham chiếu (reference_path):
+   + Nếu là Dataset hoặc file không phải định dạng .jsonl, thì:
+      + Loại bỏ các cột không cần thiết trong tập dữ liệu (remove_columns).
+      + Tạo một từ điển ánh xạ qid2example, trong đó:
+      + Key là id của câu hỏi.
+      + Value là thông tin câu hỏi bao gồm câu trả lời (answer_eval).
+   + Nếu là file .jsonl, thì:
+      + Tải dữ liệu từ file và chuẩn bị ánh xạ qid2example bằng hàm prepare_qid2example.
+
+- Chuẩn bị dữ liệu dự đoán (prediction_path):
+Nếu là file .jsonl, tải dữ liệu dự đoán từ file.
+Nếu là danh sách (List), sử dụng danh sách trực tiếp.
+Nếu không, đọc dữ liệu từ file và tạo danh sách dự đoán:
+[{"data_id": q_id, "prediction": p} for q_id, p in zip(reference['id'], predictions)]
+
+3. Chia tập dữ liệu dự đoán thành hai nhóm:
+unseen_question: Các câu hỏi không xuất hiện trong tập huấn luyện.
+unseen_entity: Các thực thể không xuất hiện trong tập huấn luyện.
+Nếu do_fix_space là True, gọi hàm fix_space để sửa khoảng trắng trong dự đoán trước khi phân loại.
+
+4. Đánh giá hiệu suất:
+Gọi hàm evaluate_infoseek_full để tính toán các điểm số.
+
+5. Ví dụ minh họa:
+Input:
+prediction_path = "predictions.jsonl"
+reference_path = "references.jsonl"
+do_fix_space = True
+
+File predictions.jsonl:
+[{"data_id": "q1", "prediction": "3. 14"}, {"data_id": "q2", "prediction": "1, 234"}]
+
+File references.jsonl:
+[{"id": "q1", "output": {"answer": "3.14"}, "data_split": "unseen_question", "question_type": "Numerical"},
+ {"id": "q2", "output": {"answer": "1234"}, "data_split": "unseen_entity", "question_type": "Numerical"}]
+
+Kết quả:
+{
+    'final_score': 90.0,
+    'unseen_question_score': {'score': 85.0, ...},
+    'unseen_entity_score': {'score': 95.0, ...}
+}
+
+
+
+
+==================================================================================================
+
+
+
+FUNCTION: prepare_qid2example(reference: List[Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
+
+
+
+1. Mục đích:
+Chuyển đổi dữ liệu tham chiếu (reference) thành một từ điển ánh xạ (qid2example) để dễ dàng truy cập thông tin câu hỏi và câu trả lời theo data_id.
+
+2. Input:
+reference: Danh sách các từ điển chứa thông tin tham chiếu, mỗi phần tử tương ứng với một câu hỏi.
+
+3. Output:
+qid2example: Một từ điển, trong đó:
+Key: data_id (ID của câu hỏi).
+Value: Một từ điển chứa thông tin chi tiết của câu hỏi.
+
+4. Giải thích code:
+Tạo từ điển rỗng qid2example.
+Duyệt qua từng phần tử trong reference:
+Lấy data_id của câu hỏi làm key.
+Lấy thông tin câu hỏi và xử lý riêng cho các câu hỏi kiểu Numerical:
+- Nếu câu trả lời (answer_eval) là danh sách, lấy range từ phần tử đầu tiên.
+- Nếu không, lấy range từ đối tượng answer_eval.
+- Chuyển các giá trị trong range thành chuỗi và chỉ giữ hai giá trị đầu tiên.
+Lưu câu hỏi đã xử lý vào qid2example.
+
+5. Ví dụ minh họa:
+reference = [
+    {
+        "data_id": "q1",
+        "question_type": "Numerical",
+        "answer_eval": [{"range": [0.9, 1.1]}]
+    },
+    {
+        "data_id": "q2",
+        "question_type": "Entity",
+        "answer_eval": ["Paris"]
+    }
+]
+
+result = prepare_qid2example(reference)
+# Kết quả:
+# {
+#     "q1": {"data_id": "q1", "question_type": "Numerical", "answer_eval": ["0.9", "1.1"]},
+#     "q2": {"data_id": "q2", "question_type": "Entity", "answer_eval": ["Paris"]}
+# }
+
+
+
+==================================================================================================
+
+
+
+FUNCTION: load_jsonl(path: str) -> List[Dict[str, Any]]:
+
+
+
+1. Mục đích:
+Đọc dữ liệu từ một file .jsonl (JSON Lines) và chuyển nó thành danh sách các từ điển.
+
+2. Input:
+path: Đường dẫn đến file .jsonl.
+
+3. Output:
+data: Một danh sách chứa các từ điển, mỗi dòng trong file .jsonl là một từ điển.
+
+
+4. Giải thích code:
+Mở file ở chế độ đọc ('r') và mã hóa UTF-8.
+Duyệt qua từng dòng:
+Dùng json.loads để chuyển đổi mỗi dòng từ chuỗi JSON thành một từ điển.
+Thêm từ điển này vào danh sách data.
+Trả về danh sách kết quả.
+
+5. Ví dụ minh họa:
+{"id": "q1", "answer": "42"}
+{"id": "q2", "answer": "Paris"}
+
+result = load_jsonl("data.jsonl")
+# Kết quả:
+# [{"id": "q1", "answer": "42"}, {"id": "q2", "answer": "Paris"}]

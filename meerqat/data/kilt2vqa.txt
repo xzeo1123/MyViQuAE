@@ -1,0 +1,1311 @@
+==================================================================================================
+
+
+Chương trình trên tập trung vào việc xử lý, tạo và xuất dữ liệu VQA cho các thực thể,
+kết hợp với hình ảnh có liên quan. Nó sử dụng một số thư viện để làm việc với dữ liệu,
+tải xuống hình ảnh, và xuất dữ liệu ra định dạng JSON cho Label Studio.
+Các hàm trong mã đều có mục đích rõ ràng: từ việc tạo câu hỏi, tải hình ảnh, đến việc xuất
+dữ liệu cuối cùng phục vụ cho quá trình đánh dấu và huấn luyện mô hình học máy.
+
+
+
+==================================================================================================
+
+
+ner (Named Entity Recognition):
+Mục đích: Tìm kiếm và nhận diện các thực thể trong câu hỏi, đồng thời thay thế chúng bằng một placeholder (dấu giữ chỗ).
+Ví dụ minh họa:
+Input: Who wrote *the opera Carmen*?
+Output: Who wrote {mention} (cả the opera và Carmen được thay thế).
+
+
+
+==================================================================================================
+
+
+ned (Liên kết thực thể):
+Mục đích: Xác định thực thể chính xác dựa trên các trang Wikipedia trong tập dữ liệu KILT.
+Cách hoạt động:
+Tính toán Word Error Rate (WER) giữa nhắc đến thực thể và các tiêu đề/biệt danh thực thể từ Wikipedia.
+Chỉ giữ lại những thực thể có WER <= 0.5 để đảm bảo độ chính xác cao.
+Output: Tạo file entities.json chứa thông tin chi tiết về các thực thể đã được liên kết.
+
+* Dữ liệu về các thực thể này được thu thập trong `wiki.py`,
+* Chỉ cần chạy `kilt2vqa.py count_entities` để lưu một dict với tất cả các thực thể đã loại bỏ sự mơ hồ (đầu ra là `entities.json`).
+
+
+==================================================================================================
+
+
+generate mentions
+* Trước tiên cần chạy wiki.py data
+
+Mục đích: Tạo các nhắc đến thực thể mơ hồ để thay thế placeholder trong câu hỏi.
+Nguyên tắc hoạt động:
+Con người: Sử dụng thông tin giới tính và nghề nghiệp (nếu có) để tạo nhắc đến như "this woman", "this artist".
+Không phải con người:
+Nếu là sinh vật học (taxon): Sử dụng thứ bậc như "this species".
+Nếu là đồ vật: Sử dụng phân loại như "this tower".
+
+
+
+==================================================================================================
+
+
+generate vq
+* Trước tiên cần chạy wiki.py data
+
+Mục đích: Tạo câu hỏi VQA hoàn chỉnh với nhắc đến mơ hồ và hình ảnh minh họa.
+Cách hoạt động:
+Chọn một loại nhắc đến và một nhắc đến tương ứng từ các kết quả đã tạo.
+Chọn hình ảnh tốt nhất cho thực thể dựa trên các tiêu chí đã tính toán.
+
+
+* Hình ảnh có điểm cao nhất (theo phương pháp ước lượng được tính toán trong `wiki.py commons heuristics`).
+
+
+
+==================================================================================================
+
+
+labelstudio
+
+* Đầu tiên gọi `generate vq` tức là không cần phải gọi cả hai!
+
+Mục đích: Xuất bộ dữ liệu thành định dạng JSON để sử dụng trong Label Studio – một công cụ gắn nhãn dữ liệu.
+Hoạt động: Gọi generate vq trước, sau đó chuyển đổi kết quả thành JSON cho Label Studio.
+
+
+
+==================================================================================================
+
+
+download
+
+Mục đích: Tải hình ảnh từ Wikimedia Commons về máy để sử dụng cho VQA.
+Hoạt động:
+Sử dụng chức năng save_image từ meerqat.data.wiki để lưu hình ảnh.
+Hỗ trợ chia nhỏ (sharding) dữ liệu để xử lý từng phần, giảm tải.
+
+
+
+==================================================================================================
+
+
+Các hằng số NER: INVALID_ENTITIES = {DATE, TIME, PERCENT, MONEY, QUANTITY, ORDINAL, CARDINAL}
+
+
+Ý nghĩa: Tập hợp các thực thể bị loại trừ vì không phù hợp để thay thế trong nhiệm vụ VQA.
+Ví dụ: Số tiền, ngày tháng, phần trăm, v.v.
+
+
+
+==================================================================================================
+
+
+Các phụ thuộc cú pháp hợp lệ: VALID_DEP = {dobj, nsubj, pobj, obj, nsubjpass, poss, obl, root}
+
+Ý nghĩa: Tập hợp các quan hệ cú pháp hợp lệ để xử lý và thay thế nhắc đến thực thể.
+Ví dụ:
+dobj: Đối tượng trực tiếp (direct object).
+nsubj: Chủ ngữ (nominal subject).
+
+
+
+==================================================================================================
+
+
+Các phụ thuộc sinh đại từ
+
+Ý nghĩa: Xác định các mối quan hệ ngữ pháp cần thiết để thay thế đại từ nhân xưng.
+HE_SHE_DEP: Thay thế "he" hoặc "she".
+HIM_HER_DEP: Thay thế "him" hoặc "her".
+HIS_HERS_DEP: Thay thế "his" hoặc "hers".
+
+
+
+==================================================================================================
+
+
+Các hằng số giới tính (Wikidata)
+
+Ý nghĩa: Phân loại giới tính của thực thể dựa trên các mã Wikidata.
+
+
+==================================================================================================
+
+
+Thiết lập seed ngẫu nhiên
+
+Ý nghĩa: Đảm bảo tính tái lập của các kết quả ngẫu nhiên trong chương trình.
+
+
+
+==================================================================================================
+
+
+
+FUNCTION: in_range(number: float, range_list: Tuple[float, float]) -> bool
+
+
+
+1. Mục đích:
+Hàm wer được sử dụng để tính Word Error Rate (WER), tức là tỷ lệ lỗi từ.
+WER đo lường mức độ khác nhau giữa hai chuỗi văn bản ở cấp độ từ, dựa trên khoảng cách Levenshtein.
+
+2. Input:
+a (List[str]): Danh sách các từ từ chuỗi thứ nhất (chuỗi tham chiếu).
+b (List[str]): Danh sách các từ từ chuỗi thứ hai (chuỗi đầu vào).
+
+3. Output:
+float: Giá trị WER, được tính bằng công thức:
+WER = số lỗi chỉnh sửa / số từ trong chuỗi dài hơn
+
+4. Giải thích code:
+Xác định chiều dài của chuỗi dài hơn (giữa a và b) để làm mẫu số.
+Tính số lỗi chỉnh sửa giữa hai chuỗi bằng hàm align, trả về khoảng cách Levenshtein.
+Chia số lỗi chỉnh sửa cho chiều dài chuỗi dài hơn để chuẩn hóa.
+
+5. Ví dụ minh họa:
+# Chuỗi đầu vào
+a = ["the", "cat", "sat", "on", "the", "mat"]
+b = ["the", "dog", "sat", "on", "a", "mat"]
+
+# Tính WER
+print(wer(a, b))  # Output: 0.3333 (2 lỗi trên 6 từ)
+
+
+
+==================================================================================================
+
+
+
+FUNCTION: item2placeholder(item, model=None):
+
+
+
+1. Mục đích:
+Hàm này xử lý câu hỏi đầu vào cho bài toán Visual Question Answering (VQA).
+Cụ thể, nó thay thế một thực thể được nhắc đến rõ ràng (và các từ liên quan)
+bằng một placeholder ({mention}) để tạo câu hỏi mơ hồ.
+
+2. Input:
+item (dict):
+Từ điển chứa câu hỏi gốc, phải có khóa "input", là chuỗi văn bản cần xử lý.
+model (spacy.lang.en.English):
+Pipeline của SpaCy, bao gồm NER (Named Entity Recognition) và phân tích cú pháp phụ thuộc.
+
+3. Output:
+dict: Từ điển giống đầu vào, nhưng được bổ sung thêm:
+"placeholder" (List[dict]): Danh sách các câu hỏi với placeholder thay thế, ví dụ:
+[{"input": "Who wrote {mention}",
+  "entity": {...},
+  "dependency": "dobj"}]
+"spacy_input" (dict): Chuỗi đầu vào được gán nhãn POS và NER, được chuyển sang định dạng JSON bằng Doc.to_json().
+
+4. Giải thích code:
+Tạo các trường bổ sung:
+Thêm trường "placeholder" để chứa kết quả xử lý.
+Phân tích cú pháp câu hỏi gốc bằng SpaCy và lưu vào "spacy_input".
+
+Kiểm tra và xử lý thực thể:
+Nếu không tìm thấy thực thể (question.ents), trả về dữ liệu gốc.
+Duyệt qua từng thực thể (e) và kiểm tra tính hợp lệ dựa trên:
+Loại thực thể (INVALID_ENTITIES).
+Loại phụ thuộc ngữ pháp của token (VALID_DEP).
+
+Xác định phạm vi thực thể:
+Xác định từ đầu tiên (start) và cuối cùng (end) của thực thể, bao gồm cả các từ liên quan (syntactic children).
+
+Xử lý chồng lấn thực thể:
+Nếu một thực thể nằm hoàn toàn trong phạm vi của thực thể khác, bỏ qua thực thể nhỏ hơn.
+
+Thay thế thực thể bằng placeholder:
+Thay thế thực thể và các từ liên quan bằng {mention} để tạo câu hỏi mơ hồ.
+
+Lưu kết quả:
+Thêm thông tin thực thể (entity) và loại phụ thuộc (dependency) vào danh sách "placeholder".
+
+5. Ví dụ minh họa:
+# Đầu vào
+item = {"input": "Who wrote the opera Carmen?"}
+model = spacy.load("en_core_web_sm")
+
+# Gọi hàm
+result = item2placeholder(item, model=model)
+
+# Kết quả
+print(result["placeholder"])
+# Output:
+# [{"input": "Who wrote {mention}",
+#   "entity": {...},
+#   "dependency": "dobj"}]
+
+
+
+==================================================================================================
+
+
+
+FUNCTION: stats(kilt_subset)
+
+
+
+1. Mục đích:
+Hàm này thống kê các thông tin liên quan đến tập dữ liệu KILT (Knowledge Intensive Language Tasks).
+Cụ thể, nó tính số lượng placeholder, nguồn câu hỏi khác nhau, và số lượng câu hỏi hình ảnh (Visual Questions - VQ),
+cùng các thống kê phụ thuộc cú pháp.
+
+2. Input:
+kilt_subset (List[Dict]): Một danh sách các mục, trong đó mỗi mục là một từ điển chứa thông tin về câu hỏi,
+placeholder, và các câu hỏi hình ảnh.
+
+3. Output:
+str: Chuỗi được biểu diễn dưới dạng bảng (table), hiển thị thống kê với các cột như:
+placeholders: Tổng số placeholder được tạo.
+originals: Tổng số câu hỏi ban đầu.
+distinct source: Số lượng nguồn câu hỏi khác nhau (dựa trên placeholder).
+vqs: Số lượng câu hỏi hình ảnh (VQ).
+Thống kê các loại phụ thuộc cú pháp.
+
+4. Giải thích code:
+Khởi tạo từ điển thống kê (stat_dict):
+Đặt giá trị mặc định cho các trường quan trọng:
+placeholders: Số lượng placeholder.
+originals: Số câu hỏi gốc.
+distinct source: Số nguồn câu hỏi khác nhau.
+vqs: Số câu hỏi hình ảnh.
+
+Duyệt qua từng mục trong kilt_subset:
+Tính tổng số placeholder trong mục (len_placeholder).
+Cập nhật các thống kê:
+placeholders: Tổng số placeholder trong toàn bộ tập.
+distinct source: Số mục có ít nhất một placeholder.
+vqs: Tổng số câu hỏi hình ảnh.
+
+Thống kê loại phụ thuộc cú pháp:
+Duyệt qua từng placeholder trong mục, cập nhật số lượng cho từng loại phụ thuộc cú pháp (dựa trên trường "dependency").
+
+Xuất kết quả dưới dạng bảng LaTeX:
+Sử dụng thư viện tabulate để trình bày kết quả dưới dạng bảng.
+
+5. Ví dụ minh họa:
+# Đầu vào mẫu
+kilt_subset = [
+    {"placeholder": [{"dependency": "dobj"}, {"dependency": "nsubj"}], "vq": [1, 2]},
+    {"placeholder": [{"dependency": "nsubj"}], "vq": []},
+    {"placeholder": [], "vq": [1]}
+]
+
+# Kết quả
+print(stats(kilt_subset))
+# Output (LaTeX table):
+# \begin{tabular}{}
+# placeholders & originals & distinct source & vqs & dobj & nsubj \\
+# 3            & 3         & 2               & 3   & 1     & 2     \\
+# \end{tabular}
+
+
+
+==================================================================================================
+
+
+
+FUNCTION: stringify(kilt_subset, field="placeholder", include_answer=True, include_provenance=True, include_dep=False):
+
+
+
+1. Mục đích:
+Hàm này chuyển đổi tập dữ liệu KILT thành chuỗi dạng dễ đọc, bao gồm các câu hỏi, placeholder, câu trả lời, và thông tin provenance.
+
+2. Input:
+kilt_subset (List[Dict]): Danh sách các mục, trong đó mỗi mục là một từ điển chứa thông tin về câu hỏi, placeholder, câu trả lời và provenance.
+field (str, mặc định "placeholder"): Tên trường để lấy thông tin từ mục (thường là "placeholder").
+include_answer (bool, mặc định True): Bao gồm câu trả lời hay không.
+include_provenance (bool, mặc định True): Bao gồm thông tin provenance hay không.
+include_dep (bool, mặc định False): Bao gồm thông tin về loại phụ thuộc cú pháp hay không.
+
+3. Output:
+Tuple[str, str]: Một tuple chứa:
+Chuỗi kết quả (results): Các mục hợp lệ, đã được chuyển thành chuỗi dạng dễ đọc.
+Chuỗi không hợp lệ (invalid): Danh sách các mục không có trường field.
+
+4. Giải thích code:
+Khởi tạo danh sách kết quả:
+results: Danh sách chứa các mục đã xử lý.
+invalid: Danh sách chứa các mục không hợp lệ (không có trường field).
+
+Duyệt qua từng mục trong kilt_subset:
+Nếu mục có trường field, xử lý nó:
+Thêm câu hỏi gốc (item['input']) vào danh sách.
+Duyệt qua từng placeholder và thêm câu hỏi liên quan (kèm loại phụ thuộc nếu include_dep là True).
+Nếu include_answer là True, thêm câu trả lời.
+Nếu include_provenance là True, thêm thông tin provenance (như tiêu đề).
+
+Xử lý mục không hợp lệ:
+Nếu mục không có trường field, thêm nội dung SpaCy đã phân tích (item['spacy_input']) vào invalid.
+
+Trả về kết quả:
+Ghép results và invalid thành chuỗi, ngăn cách bởi dòng trống.
+
+5. Ví dụ minh họa:
+# Đầu vào mẫu
+kilt_subset = [
+    {"input": "Who wrote Carmen?",
+     "placeholder": [{"input": "Who wrote {mention}?", "dependency": "dobj"}],
+     "output": {"answer": ["Bizet"], "provenance": [{"title": ["Carmen"]}]}
+    },
+    {"input": "What is Python?",
+     "placeholder": [],
+     "spacy_input": {"text": "What is Python?"}
+    }
+]
+
+# Kết quả
+results, invalid = stringify(kilt_subset)
+print(results)
+# Output:
+# Q: Who wrote Carmen?
+# -> Who wrote {mention}? dobj
+# A: Bizet
+#    Carmen
+
+print(invalid)
+# Output:
+# {"text": "What is Python?"}
+
+
+
+==================================================================================================
+
+
+
+FUNCTION: ner(subset)
+
+
+
+1. Mục đích:
+Hàm này thực hiện bước đầu tiên trong xử lý tập dữ liệu KILT, đó là Named Entity Recognition (NER).
+Mục tiêu là nhận diện các thực thể trong câu hỏi, tạo placeholder phù hợp để sử dụng trong hệ thống Visual Question Answering (VQA),
+và lưu lại tập dữ liệu kết quả.
+
+2. Input:
+subset (str): Tên của tập con KILT (ví dụ: triviaqa) cần xử lý.
+
+3. Output:
+Không trả về giá trị, nhưng:
+Lưu tập dữ liệu đã xử lý vào thư mục đích.
+In thống kê và ví dụ ngẫu nhiên từ dữ liệu đã xử lý.
+
+4. Giải thích code:
+Tải mô hình và dữ liệu:
+Tải mô hình ngôn ngữ SpaCy (en_core_web_lg) để thực hiện NER và phân tích cú pháp.
+Tải tập dữ liệu KILT từ hàm map_kilt_triviaqa().
+
+Xử lý dữ liệu để tạo placeholder:
+Dùng hàm item2placeholder (đã phân tích trước) để thay thế các thực thể được nhận diện bằng placeholder trong câu hỏi.
+
+Thống kê dữ liệu:
+In bảng thống kê kết quả bằng hàm stats.
+
+Lưu dữ liệu đã xử lý:
+Ghi tập dữ liệu đã chỉnh sửa vào thư mục đích meerqat_{subset}.
+
+Hiển thị ví dụ ngẫu nhiên:
+Lấy 100 ví dụ ngẫu nhiên từ dữ liệu đã xử lý.
+In các câu hỏi đã tạo và các câu hỏi không hợp lệ.
+
+5. Ví dụ minh họa:
+# Giả sử tập dữ liệu đầu vào:
+subset = "triviaqa"
+# Gọi hàm
+ner(subset)
+# Output (giả định):
+# Bảng thống kê và các ví dụ ngẫu nhiên.
+# Successfully saved output to '.../meerqat_triviaqa'
+
+
+
+==================================================================================================
+
+
+
+FUNCTION: disambiguate(item, wikipedia, wikipedia_ids, pedia_index)
+
+
+
+1. Mục đích:
+Hàm này thực hiện việc gỡ mơ hồ tên thực thể bằng cách tính Word Error Rate (WER) giữa tên thực thể trong câu hỏi
+và tiêu đề (hoặc biệt danh) của các bài viết Wikipedia liên quan.
+
+2. Input:
+item (dict): Một mục dữ liệu từ tập KILT chứa thông tin câu hỏi, placeholder, và provenance.
+wikipedia (np.ndarray): Tập dữ liệu chứa thông tin bài viết Wikipedia.
+wikipedia_ids (np.ndarray): Mảng chứa ID Wikipedia tương ứng với các bài viết.
+pedia_index (dict): Từ điển ánh xạ ID Wikipedia sang chỉ số trong wikipedia.
+
+3. Output:
+item (dict): Mục đã được gỡ mơ hồ, bao gồm thông tin về thực thể (Wikidata, ID Wikipedia, WER).
+
+4. Giải thích code:
+Duyệt qua từng placeholder trong mục:
+Trích xuất tên thực thể trong placeholder và chuyển về dạng danh sách từ.
+
+Xử lý các bài viết Wikipedia liên quan:
+Duyệt qua từng bài viết liên quan trong item['output']['provenance'].
+Lấy tiêu đề bài viết và biệt danh (aliases) từ wikipedia.
+Tính WER giữa tên thực thể và mỗi biệt danh.
+
+Chọn bài viết tốt nhất:
+Lấy bài viết có giá trị WER nhỏ nhất làm kết quả tốt nhất.
+Cập nhật thông tin thực thể trong placeholder (thêm wikidata_info, wikipedia_id, và wer).
+
+Trả về mục đã xử lý:
+Cập nhật và trả về item.
+
+5. Ví dụ minh họa:
+# Đầu vào mẫu
+item = {
+    "placeholder": [{"entity": {"text": "Carmen"}}],
+    "output": {"provenance": [{"wikipedia_id": [123], "title": ["Carmen"]}]}
+}
+wikipedia = np.array([{"wikidata_info": {"aliases": {"alias": ["Carmen"]}}, "wikipedia_id": 123}])
+wikipedia_ids = np.array([123])
+pedia_index = {}
+
+# Gọi hàm
+result = disambiguate(item, wikipedia, wikipedia_ids, pedia_index)
+
+# Output
+print(result)
+# {'placeholder': [{'entity': {'text': 'Carmen', 'wikidata_info': {...}, 'wikipedia_id': 123, 'wer': 0.0}}]}
+
+
+
+==================================================================================================
+
+
+
+FUNCTION: ned(subset, **map_kwargs)
+
+
+
+1. Mục đích:
+Hàm này thực hiện bước thứ hai trong pipeline xử lý dữ liệu, đó là Named Entity Disambiguation (NED).
+Mục tiêu là liên kết các thực thể được nhận diện trong câu hỏi với bài viết Wikipedia tương ứng,
+sử dụng danh sách các bài viết được cung cấp bởi TriviaQA.
+
+2. Input:
+subset (str): Tên của tập con KILT cần xử lý (ví dụ: triviaqa).
+map_kwargs (dict): Các tham số bổ sung được truyền vào hàm map khi duyệt qua dữ liệu.
+
+3. Output:
+Không trả về giá trị, nhưng:
+Lưu tập dữ liệu đã xử lý vào thư mục đích.
+Hiển thị thông báo hoàn thành sau khi lưu.
+
+4. Giải thích code:
+Tải dữ liệu và Wikipedia:
+Tải tập dữ liệu đã qua bước NER từ thư mục meerqat_{subset}.
+Tải thông tin bài viết Wikipedia từ dataset kilt_wikipedia.
+
+Ánh xạ dữ liệu với hàm disambiguate:
+Tạo các tham số cần thiết (fn_kwargs) để truyền vào hàm disambiguate.
+Duyệt qua từng mục trong dataset, gọi hàm disambiguate để gỡ mơ hồ các thực thể.
+
+Lưu dữ liệu đã xử lý:
+Ghi tập dữ liệu đã gỡ mơ hồ vào thư mục đích.
+
+5. Ví dụ minh họa:
+# Giả sử tập dữ liệu đầu vào
+subset = "triviaqa"
+
+# Gọi hàm
+ned(subset)
+
+# Output (giả định):
+# Successfully saved output to '.../meerqat_triviaqa'
+
+
+
+==================================================================================================
+
+
+
+FUNCTION: count_entities(subset, wer_threshold=0.5)
+
+
+
+1. Mục đích:
+Hàm này đếm số lượng thực thể (entities) đã được gỡ mơ hồ trong tập dữ liệu, dựa trên ngưỡng Word Error Rate (WER),
+đồng thời lưu danh sách các thực thể và thống kê số câu hỏi liên quan tới từng thực thể.
+
+2. Input:
+subset (str): Tên của tập con KILT cần xử lý.
+wer_threshold (float, mặc định = 0.5): Ngưỡng WER tối đa để chấp nhận một thực thể được gỡ mơ hồ.
+
+3. Output:
+Không trả về giá trị, nhưng:
+Lưu danh sách các thực thể và số câu hỏi liên quan vào file entities.json.
+Hiển thị thống kê số lượng thực thể và câu hỏi liên quan.
+
+4. Giải thích code:
+Tải dữ liệu:
+Đọc tập dữ liệu đã qua bước NED từ thư mục meerqat_{subset}.
+
+Duyệt qua từng mục trong dataset:
+Tính tổng số câu hỏi và số câu hỏi có thực thể gỡ mơ hồ (với WER ≤ ngưỡng cho trước).
+Lưu thông tin thực thể vào từ điển entities.
+
+Lưu kết quả vào file:
+Ghi danh sách các thực thể vào file entities.json.
+Hiển thị thống kê số lượng thực thể và câu hỏi liên quan.
+
+Hiển thị thống kê phân bố số lượng câu hỏi:
+Sử dụng pandas để in thống kê mô tả về số lượng câu hỏi liên quan tới từng thực thể.
+
+5. Ví dụ minh họa:
+# Giả sử tập dữ liệu đầu vào
+subset = "triviaqa"
+wer_threshold = 0.5
+
+# Gọi hàm
+count_entities(subset, wer_threshold)
+
+# Output (giả định):
+# Successfully saved output to '.../meerqat_triviaqa/entities.json'
+# Disambiguated 500 questions (300 unique entities) out of 1000 questions with a threshold of 0.5
+#        count   mean   std  min  25%  50%  75%  max
+# n_questions ...
+
+
+
+==================================================================================================
+
+
+
+FUNCTION: generate_mention(item, entities, wer_threshold=0.5, feminine_labels={})
+
+
+
+1. Mục đích:
+Hàm generate_mention sinh các mô tả hoặc cụm từ mơ hồ liên quan đến một thực thể trong câu hỏi (entity)
+dựa trên ngữ cảnh, giới tính, loại thực thể, và mối quan hệ ngữ pháp. Các cụm từ này có thể là đại từ nhân xưng (he, she),
+danh từ chỉ nghề nghiệp, hoặc phân loại loài (species, class).
+
+2. Input:
+item (dict): Một mục dữ liệu chứa câu hỏi và thông tin thực thể: Trường item['placeholder'] chứa danh sách các thực thể cần xử lý.
+entities (dict): Tập hợp các thông tin chi tiết của thực thể, như giới tính, nghề nghiệp, phân loại loài, v.v.
+wer_threshold (float): Ngưỡng Word Error Rate (WER) để chấp nhận thực thể. Thực thể với WER vượt ngưỡng sẽ bị bỏ qua.
+feminine_labels (dict): Bản đồ giữa các thực thể/nghề nghiệp và nhãn tương ứng dành riêng cho giới nữ (nếu có).
+
+3. Output:
+Trả về item với trường mới ambiguous_mentions được thêm vào từng thực thể trong item["placeholder"].
+Trường này chứa các cụm từ mơ hồ liên quan đến thực thể, ví dụ:
+Đại từ nhân xưng (pronouns): he, she, him, her.
+Mô tả giới tính (man_woman): this man, this woman.
+Nghề nghiệp (occupation): this teacher, this doctor.
+Phân loại (instanceof): this species, this class.
+
+4. Giải thích code:
+Khởi tạo các trường mơ hồ cho thực thể:
+Mỗi thực thể (vq) trong danh sách item["placeholder"] được khởi tạo với một dictionary ambiguous_mentions rỗng:
+
+Bỏ qua thực thể không hợp lệ:
+Bỏ qua nếu thực thể không có trong entities hoặc có WER lớn hơn wer_threshold.
+
+Xác định thông tin giới tính và phân loại:
+Trích xuất các thông tin:
+gender: Giới tính của thực thể.
+human: Thực thể là con người hay không.
+taxon_rankLabel: Phân loại sinh học (nếu có).
+
+Sinh cụm từ dựa trên giới tính:
+Nếu giới tính không phải là giới tính động vật (ANIMAL_SEX), sinh các cụm từ sau:
+man_woman: Sinh cụm như "this man" hoặc "this woman".
+pronouns: Dựa vào mối quan hệ ngữ pháp (dependency) để chọn đại từ (he, she, him, her, his, hers).
+
+Sinh cụm từ nghề nghiệp:
+Nếu thực thể là con người (human) và có thông tin nghề nghiệp:
+Kiểm tra nghề nghiệp có nhãn riêng cho giới nữ hay không, nếu có và giới tính là nữ, sử dụng nhãn này.
+
+Sinh cụm từ phân loại:
+Nếu không phải con người (!human), xử lý:
+taxon_rankLabel: Thêm cụm phân loại sinh học, ví dụ: "this species".
+instanceof: Thêm cụm như "this class".
+
+Lưu kết quả vào thực thể:
+Gán trường ambiguous_mentions cho thực thể và tiếp tục xử lý các thực thể khác.
+
+5. Ví dụ minh họa:
+Input:
+item = {
+    "placeholder": [
+        {
+            "entity": {
+                "wikidata_info": {"wikidata_id": "Q42"},
+                "wer": 0.3
+            },
+            "dependency": "nsubj"
+        }
+    ]
+}
+entities = {
+    "Q42": {
+        "gender": {"value": "http://www.wikidata.org/entity/male"},
+        "occupation": {
+            "value": {"label": {"value": "writer"}}
+        },
+        "instanceof": {}
+    }
+}
+generate_mention(item, entities)
+
+Output:
+{
+    "placeholder": [
+        {
+            "entity": {
+                "wikidata_info": {"wikidata_id": "Q42"},
+                "wer": 0.3
+            },
+            "dependency": "nsubj",
+            "ambiguous_mentions": {
+                "pronouns": ["he"],
+                "man_woman": ["this man"],
+                "occupation": ["this writer"],
+                "instanceof": []
+            }
+        }
+    ]
+}
+
+
+
+==================================================================================================
+
+
+
+FUNCTION: generate_mentions(subset, wer_threshold=0.5, **map_kwargs)
+
+
+
+1. Mục đích:
+Hàm generate_mentions thực hiện bước thứ ba trong quy trình, dùng để tạo các mô tả mơ hồ (ambiguous mentions)
+cho các câu hỏi chứa thực thể trong một tập dữ liệu. Quá trình này dựa trên thông tin thuộc tính của các thực thể (entities),
+như giới tính, nghề nghiệp, hoặc phân loại.
+
+2. Input:
+subset (str): Tên của tập dữ liệu cần xử lý.
+wer_threshold (float): Ngưỡng Word Error Rate (WER) để lọc thực thể. Thực thể có WER vượt ngưỡng sẽ không được xử lý.
+map_kwargs (dict): Các tham số bổ sung cho hàm dataset.map, ví dụ như num_proc (số lượng luồng xử lý song song).
+
+3. Output:
+Tập dữ liệu được cập nhật với các mô tả mơ hồ (ambiguous_mentions) được thêm vào từng thực thể trong trường placeholder.
+Thống kê phần trăm các câu hỏi có ít nhất một mô tả mơ hồ.
+Dữ liệu đã xử lý được lưu lại dưới đường dẫn chỉ định.
+
+4. Giải thích code:
+Tải dữ liệu:
+Đọc tập dữ liệu từ ổ đĩa.
+Đọc thông tin thực thể (entities.json) để sử dụng trong quá trình tạo mô tả mơ hồ.
+Kiểm tra và tải thông tin các nhãn giới tính nữ (feminine_labels.json) nếu tệp tồn tại, ngược lại khởi tạo nhãn trống.
+
+Khởi tạo tham số cho generate_mention:
+Tạo dictionary fn_kwargs chứa thông tin thực thể, ngưỡng WER, và các nhãn giới tính nữ để truyền vào hàm generate_mention.
+
+Xử lý từng thực thể:
+Gọi hàm generate_mention trên từng mục trong tập dữ liệu bằng cách sử dụng dataset.map.
+
+Lưu dữ liệu đã xử lý:
+Lưu lại tập dữ liệu đã được cập nhật vào ổ đĩa.
+
+Tính toán thống kê:
+Duyệt qua toàn bộ dữ liệu để tính phần trăm câu hỏi có ít nhất một mô tả mơ hồ.
+
+5. Ví dụ minh họa:
+Dữ liệu đầu vào:
+Tệp entities.json:
+{
+    "Q42": {
+        "gender": {"value": "http://www.wikidata.org/entity/male"},
+        "occupation": {
+            "value": {"label": {"value": "writer"}}
+        },
+        "instanceof": {}
+    }
+}
+
+Tệp feminine_labels.json:
+{
+    "writer": "authoress"
+}
+
+Một mục trong tập dữ liệu dataset:{
+    "placeholder": [
+        {
+            "entity": {
+                "wikidata_info": {"wikidata_id": "Q42"},
+                "wer": 0.3
+            },
+            "dependency": "nsubj"
+        }
+    ]
+}
+
+Dữ liệu đầu ra:
+Dữ liệu sau khi xử lý:
+{
+    "placeholder": [
+        {
+            "entity": {
+                "wikidata_info": {"wikidata_id": "Q42"},
+                "wer": 0.3
+            },
+            "dependency": "nsubj",
+            "ambiguous_mentions": {
+                "pronouns": ["he"],
+                "man_woman": ["this man"],
+                "occupation": ["this writer"],
+                "instanceof": []
+            }
+        }
+    ]
+}
+Thống kê: Giả sử tập dữ liệu có tổng cộng 100 câu hỏi, trong đó 80 câu có ít nhất một mô tả mơ hồ. Kết quả sẽ là:
+80.00% of the visual questions have at least one ambiguous mention
+
+
+
+==================================================================================================
+
+
+
+FUNCTION: generate_vq(item, entities, image_width=512)
+
+
+
+1. Mục đích:
+Hàm này tạo ra các cặp câu hỏi (input), hình ảnh (url), và các thông tin bổ sung (như mô tả thực thể, ID) cho từng thực thể trong một mục dữ liệu (item).
+
+2. Input:
+item (dict): Một mục dữ liệu trong tập dữ liệu.
+entities (dict): Thông tin thực thể được tải từ entities.json.
+image_width (int): Độ rộng mong muốn của hình ảnh (mặc định: 512 pixel).
+
+3. Output:
+Cập nhật mục dữ liệu (item) với một trường mới vq, chứa danh sách các đối tượng gồm:
+Câu hỏi (input): Dựa trên các mô tả mơ hồ đã được tạo.
+URL hình ảnh (url): Tạo từ tiêu đề hình ảnh liên quan đến thực thể.
+Các thông tin khác như wikidata_id, description, và danh sách tất cả các mô tả mơ hồ.
+
+
+4. Giải thích code:
+Khởi tạo danh sách vq
+
+Duyệt qua các placeholder trong mục dữ liệu:
+Kiểm tra và lọc các loại mô tả mơ hồ (mention_types) của thực thể. Nếu không có mô tả nào, bỏ qua mục này.
+
+Chọn hình ảnh liên quan đến thực thể:
+Lấy tiêu đề hình ảnh từ danh sách titles đã được sắp xếp trước đó.
+Nếu có nhiều hình ảnh, lấy hình ảnh tốt nhất (tiêu đề cuối cùng trong danh sách).
+
+Tạo câu hỏi và ID:
+Chọn ngẫu nhiên một loại mô tả mơ hồ và một mô tả trong loại đó.
+Sử dụng thông tin để định dạng câu hỏi (input) và tạo ID duy nhất (meerqat_id).
+
+Tạo đối tượng vq và thêm vào danh sách:
+
+Trả về mục dữ liệu đã cập nhật:
+
+5. Ví dụ minh họa:
+Giả sử:
+item: Một mục dữ liệu có các trường như sau:
+item = {
+    'id': '123',
+    'placeholder': [
+        {
+            'input': "What is {mention} known for?",
+            'entity': {
+                'wikidata_info': {
+                    'wikidata_id': 'Q76',
+                    'description': "44th president of the United States",
+                }
+            },
+            'ambiguous_mentions': {
+                'pronouns': ["he", "him"],
+                'occupation': ["this president", "this politician"]
+            }
+        }
+    ]
+}
+
+entities: Thông tin thực thể trong entities.json:
+entities = {
+    'Q76': {
+        'titles': ["File:Barack_Obama.jpg", "File:Obama_in_2009.jpg"],
+        'images': {
+            "File:Barack_Obama.jpg": {'heuristics': [0.9]},
+            "File:Obama_in_2009.jpg": {'heuristics': [0.8]},
+        }
+    }
+}
+
+Kết quả sau khi gọi hàm:
+Hình ảnh được chọn: "File:Obama_in_2009.jpg" (do có điểm số thấp nhất).
+Mô tả được chọn: "this president" (chọn ngẫu nhiên từ loại mô tả occupation).
+Kết quả item sau khi cập nhật:
+item = {
+    'id': '123',
+    'placeholder': [
+        {
+            'input': "What is {mention} known for?",
+            'entity': {
+                'wikidata_info': {
+                    'wikidata_id': 'Q76',
+                    'description': "44th president of the United States",
+                }
+            },
+            'ambiguous_mentions': {
+                'pronouns': ["he", "him"],
+                'occupation': ["this president", "this politician"]
+            }
+        }
+    ],
+    'vq': [
+        {
+            'input': "What is this president known for?",
+            'url': "https://upload.wikimedia.org/wikipedia/commons/thumb/Obama_in_2009.jpg/512px-Obama_in_2009.jpg",
+            'wikidata_id': 'Q76',
+            'meerqat_id': '<md5_hash>',
+            'mentions': ["he", "him", "this president", "this politician"],
+            'description': "44th president of the United States"
+        }
+    ]
+}
+
+
+
+==================================================================================================
+
+
+
+FUNCTION: generate_vqs(subset, exclude_categories=set(), image_width=512, **map_kwargs)
+
+
+
+1. Mục đích:
+Hàm này áp dụng generate_vq lên toàn bộ tập dữ liệu, với việc xử lý trước danh sách hình ảnh liên quan đến thực thể
+và loại bỏ các hình ảnh không mong muốn (dựa trên các danh mục bị loại trừ).
+
+
+2. Input:
+subset (str): Tên tập dữ liệu (ví dụ: validation_triviaqa).
+exclude_categories (set): Bộ danh mục cần loại trừ (ví dụ: {cosplay}).
+image_width (int): Độ rộng mong muốn của hình ảnh (mặc định: 512 pixel).
+map_kwargs (dict): Tham số bổ sung cho dataset.map.
+
+3. Output:
+Tập dữ liệu (dataset) đã được cập nhật với các trường vq.
+Danh sách thực thể (entities) đã được xử lý.
+
+4. Giải thích code:
+Tải dữ liệu và thực thể
+
+Xử lý danh sách hình ảnh của thực thể:
+Loại bỏ hình ảnh không mong muốn (nằm trong danh mục loại trừ hoặc hình minh họa).
+Sắp xếp hình ảnh theo điểm số (score) để chọn hình ảnh tốt nhất sau này.
+
+Áp dụng generate_vq lên tập dữ liệu
+
+Lưu tập dữ liệu đã xử lý
+
+In thống kê:
+Gọi hàm stats (chưa được cung cấp) để in thông tin tổng quan.
+
+5. Ví dụ minh họa:
+Giả sử:
+Tập dữ liệu (dataset):
+dataset = [
+    {
+        'id': '123',
+        'placeholder': [
+            {
+                'input': "What is {mention} known for?",
+                'entity': {
+                    'wikidata_info': {
+                        'wikidata_id': 'Q76',
+                        'description': "44th president of the United States",
+                    }
+                },
+                'ambiguous_mentions': {
+                    'pronouns': ["he", "him"],
+                    'occupation': ["this president", "this politician"]
+                }
+            }
+        ]
+    },
+    {
+        'id': '456',
+        'placeholder': [
+            {
+                'input': "What role does {mention} play?",
+                'entity': {
+                    'wikidata_info': {
+                        'wikidata_id': 'Q5',
+                        'description': "Human beings",
+                    }
+                },
+                'ambiguous_mentions': {
+                    'instanceof': ["this species"]
+                }
+            }
+        ]
+    }
+]
+
+Thông tin thực thể (entities):
+entities = {
+    'Q76': {
+        'titles': ["File:Barack_Obama.jpg", "File:Obama_in_2009.jpg"],
+        'images': {
+            "File:Barack_Obama.jpg": {'heuristics': [0.9]},
+            "File:Obama_in_2009.jpg": {'heuristics': [0.8]},
+        }
+    },
+    'Q5': {
+        'titles': ["File:Homo_sapiens.jpg"],
+        'images': {
+            "File:Homo_sapiens.jpg": {'heuristics': [0.7]},
+        }
+    }
+}
+
+Kết quả sau khi gọi hàm generate_vqs:
+Hình ảnh được chọn cho mỗi thực thể:
+Q76: "File:Obama_in_2009.jpg" (điểm số thấp nhất).
+Q5: "File:Homo_sapiens.jpg" (chỉ có một hình ảnh).
+Dữ liệu đầu ra của tập dữ liệu (dataset):
+dataset = [
+    {
+        'id': '123',
+        'placeholder': [
+            {
+                'input': "What is {mention} known for?",
+                'entity': {
+                    'wikidata_info': {
+                        'wikidata_id': 'Q76',
+                        'description': "44th president of the United States",
+                    }
+                },
+                'ambiguous_mentions': {
+                    'pronouns': ["he", "him"],
+                    'occupation': ["this president", "this politician"]
+                }
+            }
+        ],
+        'vq': [
+            {
+                'input': "What is this politician known for?",
+                'url': "https://upload.wikimedia.org/wikipedia/commons/thumb/Obama_in_2009.jpg/512px-Obama_in_2009.jpg",
+                'wikidata_id': 'Q76',
+                'meerqat_id': '<md5_hash>',
+                'mentions': ["he", "him", "this president", "this politician"],
+                'description': "44th president of the United States"
+            }
+        ]
+    },
+    {
+        'id': '456',
+        'placeholder': [
+            {
+                'input': "What role does {mention} play?",
+                'entity': {
+                    'wikidata_info': {
+                        'wikidata_id': 'Q5',
+                        'description': "Human beings",
+                    }
+                },
+                'ambiguous_mentions': {
+                    'instanceof': ["this species"]
+                }
+            }
+        ],
+        'vq': [
+            {
+                'input': "What role does this species play?",
+                'url': "https://upload.wikimedia.org/wikipedia/commons/thumb/Homo_sapiens.jpg/512px-Homo_sapiens.jpg",
+                'wikidata_id': 'Q5',
+                'meerqat_id': '<md5_hash>',
+                'mentions': ["this species"],
+                'description': "Human beings"
+            }
+        ]
+    }
+]
+
+Thống kê cuối cùng:
+Giả sử tất cả các placeholder đều có mô tả mơ hồ và hình ảnh, tỷ lệ sẽ là 100%.
+Successfully saved output to 'meerqat_<subset>'
+100.00% of the visual questions have at least one ambiguous mention
+
+
+
+==================================================================================================
+
+
+
+FUNCTION: labelstudio(*args, image_width=512, alternative_images=8, **kwargs)
+
+
+
+1. Mục đích:
+Chạy hàm generate_vqs để tạo các câu hỏi trực quan (Visual Questions).
+Chuyển đổi tập dữ liệu sang định dạng JSON phù hợp với Label Studio, bao gồm cả hình ảnh chính và hình ảnh thay thế.
+
+
+2. Input:
+args: Tham số đầu vào cho generate_vqs (ví dụ: tên tập dữ liệu).
+image_width (int): Độ rộng mong muốn của hình ảnh thumbnail (mặc định: 512 pixel).
+alternative_images (int): Số lượng hình ảnh thay thế cần thêm (mặc định: 8).
+kwargs: Các tham số bổ sung cho generate_vqs.
+
+3. Output:
+Tệp JSON chứa các câu hỏi trực quan được lưu tại meerqat_<subset>/labelstudio.json.
+
+4. Giải thích code:
+Tạo câu hỏi trực quan:
+Gọi generate_vqs để sinh dữ liệu câu hỏi trực quan (dataset) và danh sách thực thể (entities).
+
+Xử lý dữ liệu để phù hợp với Label Studio:
+Thay đổi tên trường (vd: url → image).
+Trích xuất mô tả hình ảnh từ tên tệp và thêm vào dữ liệu (image_caption).
+Tạo danh sách hình ảnh thay thế từ tập thực thể, sắp xếp theo điểm số cao đến thấp.
+Thêm thông tin bổ sung như nhãn thực thể (entityLabel) và hình ảnh tham chiếu (entity_image).
+
+Lưu tệp JSON:
+Dữ liệu được chuyển đổi sang định dạng Label Studio và lưu tại tệp labelstudio.json.
+
+5. Ví dụ minh họa:
+
+Đầu vào:
+Tên tập dữ liệu: validation_triviaqa.
+Hình ảnh liên quan đến thực thể Q76 (Barack Obama):
+{
+    "titles": ["File:Obama_in_2009.jpg", "File:Obama_in_2010.jpg"]
+}
+
+Đầu ra (JSON):
+{
+    "0": {
+        "data": {
+            "image": "https://upload.wikimedia.org/commons/thumb/File:Obama_in_2009.jpg",
+            "image_caption": "Obama in 2009",
+            "vq": "What is this politician known for?",
+            "question": "What is {mention} known for?",
+            "answer": "Barack Obama",
+            "mentions": "he, him, this president, this politician",
+            "entityLabel": "Barack Obama",
+            "entity_image": "https://upload.wikimedia.org/commons/thumb/File:Reference_image.jpg",
+            "altimage0": "https://upload.wikimedia.org/commons/thumb/File:Obama_in_2010.jpg",
+            "altimage0caption": "Obama in 2010"
+        }
+    }
+}
+
+
+
+==================================================================================================
+
+
+
+FUNCTION: download_image(item, session, image_width=512)
+
+
+
+1. Mục đích:
+Tải hình ảnh từ URL thumbnail, lưu trữ cục bộ và cập nhật thông tin hình ảnh trong mục dữ liệu.
+
+2. Input:
+item (dict): Dữ liệu chứa URL của hình ảnh (url).
+session: Phiên HTTP để thực hiện tải hình ảnh.
+image_width (int): Độ rộng mong muốn của hình ảnh thumbnail.
+
+3. Output:
+Dữ liệu mục (item) được cập nhật với đường dẫn cục bộ của hình ảnh (image).
+
+4. Giải thích code:
+Chuyển đổi URL:
+Sử dụng hàm file_name_to_thumbnail để tạo URL thumbnail có kích thước mong muốn từ tên tệp.
+
+Tải và lưu hình ảnh:
+Gọi hàm save_image để tải hình ảnh từ URL và lưu trữ vào thư mục đích.
+
+Cập nhật mục dữ liệu:
+Thay thế URL gốc bằng đường dẫn cục bộ của hình ảnh nếu tải thành công.
+
+5. Ví dụ minh họa:
+Đầu vào:
+item = {'url': 'https://upload.wikimedia.org/commons/thumb/File:Obama_in_2009.jpg'}
+
+Đầu ra:
+item = {'image': 'Obama_in_2009.jpg'}
+
+
+
+==================================================================================================
+
+
+
+FUNCTION: download_images(subset, fn_kwargs, num_shards=None, shard_index=None, **map_kwargs)
+
+
+
+1. Mục đích:
+Tải hàng loạt hình ảnh từ tập dữ liệu, lưu trữ cục bộ và cập nhật thông tin trong dữ liệu.
+
+2. Input:
+subset (str): Tên tập dữ liệu cần xử lý (vd: validation_triviaqa).
+fn_kwargs (dict): Tham số bổ sung cho download_image.
+num_shards (int, tùy chọn): Số lượng phân đoạn (shard) để xử lý dữ liệu.
+shard_index (int, tùy chọn): Chỉ số của phân đoạn cần xử lý.
+map_kwargs (dict): Tham số bổ sung cho dataset.map.
+
+3. Output:
+Tập dữ liệu đã được xử lý và lưu trữ.
+
+4. Giải thích code:
+Tải dữ liệu:
+Đọc tập dữ liệu từ thư mục tương ứng.
+
+Xử lý dữ liệu phân đoạn (nếu cần):
+Nếu num_shards được chỉ định, chia tập dữ liệu thành các phân đoạn nhỏ hơn và chỉ xử lý một phần dữ liệu.
+
+Tải hình ảnh:
+Gọi download_image trên từng mục trong tập dữ liệu.
+Thêm session HTTP để tối ưu hóa việc tải hình ảnh.
+
+Lưu dữ liệu:
+Lưu dữ liệu đã xử lý vào thư mục gốc hoặc thư mục con (nếu có phân đoạn).
+
+5. Ví dụ minh họa:
+Đầu vào:
+subset = 'validation_triviaqa'
+
+Kết quả:
+Các mục trong tập dữ liệu được cập nhật với đường dẫn cục bộ của hình ảnh:
+dataset = [
+    {'image': 'Obama_in_2009.jpg'},
+    {'image': 'Homo_sapiens.jpg'}
+]
+Dữ liệu được lưu tại thư mục meerqat_validation_triviaqa.
+
+
+
+==================================================================================================
+
+
+
+main
+
+
+
+python script.py <mode> <subset> [options]
+<mode>: Lựa chọn tác vụ (ví dụ: ner, ned, generate, labelstudio, download).
+<subset>: Tên tập dữ liệu (ví dụ: validation_triviaqa).
+Tùy chọn (options): Các tham số bổ sung cho từng chế độ.
+
+
+a. Chế độ ner
+Mục đích: Chạy nhận diện thực thể (Named Entity Recognition - NER).
+
+Lệnh chạy: python script.py ner validation_triviaqa --disable_caching
+
+Ý nghĩa lệnh:
+ner: Chọn chế độ NER.
+validation_triviaqa: Tập dữ liệu cần xử lý.
+--disable_caching: Vô hiệu hóa việc tải dữ liệu đã cache.
+
+
+b. Chế độ ned
+Mục đích: Chạy ánh xạ thực thể (Named Entity Disambiguation - NED).
+
+Lệnh chạy: python script.py ned validation_triviaqa --map_kwargs map_kwargs.json
+
+Ý nghĩa lệnh:
+ned: Chọn chế độ NED.
+validation_triviaqa: Tập dữ liệu cần xử lý.
+--map_kwargs map_kwargs.json: Đọc các tham số ánh xạ từ tệp JSON.
+
+
+c. Chế độ count_entities
+Mục đích: Đếm số lượng thực thể, có thể dùng ngưỡng WER (Word Error Rate).
+
+Lệnh chạy: python script.py count_entities validation_triviaqa --threshold 0.9
+
+Ý nghĩa lệnh:
+count_entities: Đếm thực thể trong tập dữ liệu.
+validation_triviaqa: Tập dữ liệu cần xử lý.
+--threshold 0.9: Sử dụng ngưỡng WER là 0.9.
+
+
+d. Chế độ generate
+Mục đích: Sinh dữ liệu, có thể là mentions hoặc visual questions (VQ).
+
+1. Sinh mentions: python script.py generate validation_triviaqa mentions --threshold 0.8 --disable_caching
+
+Ý nghĩa lệnh:
+generate: Chọn chế độ tạo dữ liệu.
+mentions: Sinh mentions.
+--threshold 0.8: Ngưỡng WER là 0.8.
+
+2. Sinh Visual Questions (VQs): python script.py generate validation_triviaqa vq cosplay --image_width 512 --disable_caching
+
+Ý nghĩa lệnh:
+vq: Sinh câu hỏi trực quan.
+cosplay: Loại bỏ danh mục cosplay.
+--image_width 512: Đặt độ rộng hình ảnh là 512 pixel.
+
+
+e. Chế độ labelstudio
+Mục đích: Chuyển đổi tập dữ liệu sang định dạng JSON của Label Studio.
+
+Lệnh chạy: python script.py labelstudio validation_triviaqa cosplay --alternative_images 8 --image_width 512
+
+Ý nghĩa lệnh:
+labelstudio: Chọn chế độ tạo dữ liệu cho Label Studio.
+cosplay: Loại bỏ danh mục cosplay.
+--alternative_images 8: Tạo thêm 8 hình ảnh thay thế.
+--image_width 512: Đặt độ rộng hình ảnh là 512 pixel.
+
+
+f. Chế độ download
+Mục đích: Tải hình ảnh từ tập dữ liệu.
+
+Lệnh chạy: python script.py download validation_triviaqa --image_width 512 --num_shards 4 --shard_index 2
+
+Ý nghĩa lệnh:
+download: Chọn chế độ tải hình ảnh.
+--image_width 512: Đặt độ rộng hình ảnh là 512 pixel.
+--num_shards 4: Chia tập dữ liệu thành 4 phần.
+--shard_index 2: Xử lý phần thứ 2 trong tập dữ liệu.
+
+
+
+
+Quy trình ví dụ đầy đủ:
+Chạy nhận diện thực thể (NER): python script.py ner validation_triviaqa --disable_caching
+
+Ánh xạ thực thể (NED): python script.py ned validation_triviaqa --map_kwargs map_kwargs.json
+
+Sinh Visual Questions (VQ): python script.py generate validation_triviaqa vq --image_width 512 --disable_caching
+
+Chuyển đổi dữ liệu cho Label Studio: python script.py labelstudio validation_triviaqa --alternative_images 5 --image_width 256
+
+Tải hình ảnh: python script.py download validation_triviaqa --num_shards 3 --shard_index 0 --image_width 512
+
+
+Lưu ý
+Cần chuẩn bị trước tệp dữ liệu (như validation_triviaqa) và cấu hình (như map_kwargs.json).
+Các chế độ như ner, ned, và generate yêu cầu các hàm tương ứng (ner, ned, generate_mentions, generate_vqs) được triển khai đầy đủ.
+Kiểm tra đường dẫn lưu trữ và quyền truy cập của các tệp output.
