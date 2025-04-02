@@ -11,8 +11,8 @@ You should run all of these in this order to get the whole cake:
 ``data entities``
 -----------------
 
-**input/output**: ``entities.json`` (output of ``kilt2vqa.py count_entities``)  
-queries many different attributes for all entities in the questions 
+**input/output**: ``entities.json`` (output of ``kilt2vqa.py count_entities``)
+queries many different attributes for all entities in the questions
 
 Also sets a 'reference image' to the entity using Wikidata properties in the following order of preference:
     - P18 ‘image’ (it is roughly equivalent to the infobox image in Wikipedia articles)
@@ -24,15 +24,15 @@ Also sets a 'reference image' to the entity using Wikidata properties in the fol
 -----------------
 ``data feminine``
 -----------------
-**input**: ``entities.json``  
-**output**: ``feminine_labels.json``  
+**input**: ``entities.json``
+**output**: ``feminine_labels.json``
 gets feminine labels for classes and occupations of these entities
 
 ---------------------
 ``data superclasses``
 ---------------------
-**input**: ``entities.json``  
-**output**: ``<n>_superclasses.json``  
+**input**: ``entities.json``
+**output**: ``<n>_superclasses.json``
 
 gets the superclasses of the entities classes up ``n`` level (defaults to 'all', i.e. up to the root)
 
@@ -44,26 +44,26 @@ we found that heuristics/images based on depictions were not that discriminative
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 ``commons sparql depicts``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
-**input/output**: ``entities.json``  
+**input/output**: ``entities.json``
 Find all images in Commons that *depict* the entities
 
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ``commons sparql depicted``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-**input**: ``entities.json``  
-**output**: ``depictions.json``  
+**input**: ``entities.json``
+**output**: ``depictions.json``
 Find all entities depicted in the previously gathered step
 
 ^^^^^^^^^^^^^^^^^
 ``data depicted``
 ^^^^^^^^^^^^^^^^^
-**input**: ``entities.json``, ``depictions.json``   
-**output**: ``entities.json``  
-Gathers the same data as in ``wiki.py data entities <subset>`` for *all* entities depicted in any of the depictions  
+**input**: ``entities.json``, ``depictions.json``
+**output**: ``entities.json``
+Gathers the same data as in ``wiki.py data entities <subset>`` for *all* entities depicted in any of the depictions
 Then apply a heuristic to tell whether an image depicts the entity prominently or not:
 *the depiction is prominent if the entity is the only one of its class*, e.g.:
-    - *pic of Barack Obama and Joe Biden* -> not prominent  
-    - *pic of Barack Obama and the Eiffel Tower* -> prominent  
+    - *pic of Barack Obama and Joe Biden* -> not prominent
+    - *pic of Barack Obama and the Eiffel Tower* -> prominent
 
 Note this heuristic is not used in ``commons heuristics``
 
@@ -71,7 +71,7 @@ Note this heuristic is not used in ``commons heuristics``
 ----------
 ``filter``
 ----------
-**input/output**: ``entities.json``  
+**input/output**: ``entities.json``
 Filters entities w.r.t. to their class/nature/"instance of" and date of death, see ``wiki.py`` docstring for option usage (TODO share concrete_entities/abstract_entities)
 Also entities with a ‘sex or gender’ (P21) or ‘occupation’ (P106) are kept by default.
 
@@ -80,19 +80,19 @@ Note this deletes data so maybe save it if you're unsure about the filter.
 ----------------
 ``commons rest``
 ----------------
-**input/output**: ``entities.json``  
+**input/output**: ``entities.json``
 
 Gathers images and subcategories recursively from the entity root commons-category
 
-Except if you have a very small dataset you should probably set ``--max_images=0`` to query only categories and use ``wikidump.py`` to gather images from those.  
+Except if you have a very small dataset you should probably set ``--max_images=0`` to query only categories and use ``wikidump.py`` to gather images from those.
 ``--max_categories`` defaults to 100.
 
 
 ----------------------
 ``commons heuristics``
 ----------------------
-**input/output**: ``entities.json``  
-Run ``wikidump.py`` first to gather images.  
+**input/output**: ``entities.json``
+Run ``wikidump.py`` first to gather images.
 Compute heuristics for the image (control with ``<heuristic>``, default to all):
     - ``categories``: the entity label should be included in *all* of the image category
     - ``description``: the entity label should be included in the image description
@@ -135,7 +135,6 @@ Options:
 Functions
 =========
 """
-import re
 import time
 import json
 import warnings
@@ -158,6 +157,10 @@ from docopt import docopt
 
 from meerqat.data.loading import DATA_ROOT_PATH, COMMONS_PATH
 from meerqat.data.utils import md5
+
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import re
+import os
 
 # One client (user agent + IP) is allowed 60 seconds of processing time each 60 seconds
 # https://www.mediawiki.org/wiki/Wikidata_Query_Service/User_Manual
@@ -485,7 +488,7 @@ def set_reference_images(entities):
                         break
                 if encoding in VALID_ENCODING:
                     break
-            
+
     return entities
 
 
@@ -527,7 +530,7 @@ def depiction_instanceof_heuristic(depictions, entities):
         if 'instanceof' not in entity:
             continue
         instanceof = entity['instanceof'].keys()
-        entity_depictions = entity.get("depictions", {})    
+        entity_depictions = entity.get("depictions", {})
         for mid, depiction in entity_depictions.items():
             mid = mid.split('/')[-1]
             depiction["prominent_instanceof_heuristic"] = True
@@ -589,37 +592,7 @@ def request(query, session, tries=0, max_tries=2):
 
 def query_commons_subcategories(category, categories, images,
                                 max_images=1000, max_categories=100,
-                                n_queried_categories=0):
-    """Query all commons subcategories (and optionally images) from a root category recursively
-
-    Parameters
-    ----------
-    category: str
-        Root category
-    categories: dict
-        {str: bool}, True if the category has been processed
-    images: dict
-        {str: dict}, Key is the file title, gathers data about the image, see query_image
-    max_images: int, optional
-        Maximum number of images to query per entity/root category.
-        Set to 0 if you only want to query categories (images dict will be left empty)
-        Defaults to 1000
-    max_categories: int, optional
-        Maximum number of categories to query per entity/root category.
-        Enforced via:
-        - n_queried_categories if max_images > 0
-        - len(categories) otherwise
-        Defaults to 100
-    n_queried_categories: int, optional
-        Keeps track of the number of queried categories in order to enforce max_categories
-        Should be equal to the number of True in categories
-        Defaults to 0
-
-    Returns
-    -------
-    categories, images: dict
-        Same as input, hopefully enriched with new data
-    """
+                                n_queried_categories=0, executor=None):
     query = COMMONS_REST_LIST.format(cmtitle=category, cmtype="subcat|file")
     session = requests.Session()
     response = request(query, session)
@@ -629,41 +602,41 @@ def query_commons_subcategories(category, categories, images,
     if results is None:
         return categories, images
 
-    # recursive call: query subcategories of the subcategories
     categories[category] = True
     n_queried_categories += 1
     todo = []
+    future_to_title = {}
     for result in results:
         title = result['title']
         type_ = result["type"]
-        # first query all files in the category before querying subcategories
-        # except if max_images <= 0, then only query subcategories
         if type_ == "file" and max_images > 0:
-            # avoid querying the same image again and again as the same image is often in multiple categories
             if title in images:
                 continue
             encoding = title.split('.')[-1].lower()
             if encoding not in VALID_ENCODING:
                 continue
-            images[title] = query_image(title, session)
+            # Submit query_image qua executor
+            future = executor.submit(query_image, title, session)
+            future_to_title[future] = title
         elif type_ == "subcat":
-            # avoid 1. to get stuck in a loop 2. extra processing:
-            # skip already processed categories
             if title not in categories:
                 todo.append(title)
-                # and keep track of the processed categories
                 categories[category] = False
-    # return when we have enough images or categories
-    if len(images) > max_images or \
-        (max_images > 0 and n_queried_categories > max_categories) or \
-        (max_images <= 0 and len(categories) > max_categories):
+    for future in as_completed(future_to_title):
+        title = future_to_title[future]
+        try:
+            img_data = future.result()
+            images[title] = img_data
+        except Exception as e:
+            print(f"Error fetching image {title}: {e}")
+    if len(images) > max_images or (max_images > 0 and n_queried_categories > max_categories) or (max_images <= 0 and len(categories) > max_categories):
         return categories, images
-    # else query all subcategories
     for title in todo:
         query_commons_subcategories(title, categories, images,
                                     max_images=max_images,
                                     max_categories=max_categories,
-                                    n_queried_categories=n_queried_categories)
+                                    n_queried_categories=n_queried_categories,
+                                    executor=executor)
     return categories, images
 
 
@@ -695,18 +668,23 @@ def query_image(title, session):
     return image
 
 
+def sanitize_filename(filename):
+    return re.sub(r'[<>:"/\\|?*]', '_', filename)
+
 def save_image(url, session):
     file_name = thumbnail_to_file_name(url, original=False)
+    file_name = sanitize_filename(file_name)
     image_path = COMMONS_PATH / file_name
+
     if len(file_name) > len("Dr._Paul_R._Heyl,_Scientists_for_Uncle_Sam_awarded_Magellan_Gold_Medal._Dr._L.J._Briggs,_left,_Assistant_Director_and_Dr._Paul_R._Heyl,_Chief_of_the_Sound_Section_of_the_United_States_Bureau_of_Standards,_LCCN2016888398_(cropped).tiff"):
         return None
 
+    os.makedirs(image_path.parent, exist_ok=True)
+
     if not image_path.exists():
-        # request image
         response = request(requests.utils.quote(url, safe=':/'), session)
         if not response:
             return None
-        # save if request went OK
         with open(image_path, 'wb') as file:
             file.write(response.content)
 
@@ -715,20 +693,20 @@ def save_image(url, session):
 
 def update_from_commons_rest(entities, max_images=1000, max_categories=100):
     n_images, n_categories = [], []
-    for entity in tqdm(entities.values(), desc="Updating entities from Commons"):
-        # query only entities that appear in dataset (some may come from 'depictions')
-        if entity['n_questions'] < 1 or "commons" not in entity:
-            continue
-        category = "Category:" + entity['commons']['value']
-        # query all images in of entity Commons category and subcategories recursively
-        categories, images = {}, {}
-        query_commons_subcategories(category, categories, images, max_images, max_categories)
-        entity['images'] = images
-        entity['categories'] = categories
-        n_images.append(len(images))
-        n_categories.append(len(categories))
-    print(f"{len(n_images)} entities out of {len(entities)} have a root Commons Category and questions in the dataset\n"
-          f"Retrieved images:\n{pd.DataFrame(n_images).describe()}\nand categories:\n{pd.DataFrame(n_categories).describe()}")
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        for entity in tqdm(entities.values(), desc="Updating entities from Commons"):
+            if entity.get('n_questions', 0) < 1 or "commons" not in entity:
+                continue
+            category = "Category:" + entity['commons']['value']
+            categories, images = {}, {}
+            query_commons_subcategories(category, categories, images, max_images, max_categories, executor=executor)
+            entity['images'] = images
+            entity['categories'] = categories
+            n_images.append(len(images))
+            n_categories.append(len(categories))
+    print(f"{len(n_images)} entities have a root Commons Category.\n"
+          f"Images stats:\n{pd.DataFrame(n_images).describe()}\n"
+          f"Categories stats:\n{pd.DataFrame(n_categories).describe()}")
     return entities
 
 
@@ -947,6 +925,7 @@ if __name__ == '__main__':
     path = subset_path / "entities.json"
     with open(path) as file:
         entities = json.load(file)
+
     depictions_path = subset_path / "depictions.json"
 
     # update from Wikidata or Wikimedia Commons
@@ -962,8 +941,8 @@ if __name__ == '__main__':
             # load depictions
             with open(depictions_path) as file:
                 depictions = json.load(file)
-            depicted_entities = {qid.split('/')[-1]: {"n_questions": 0} 
-                                 for depiction in depictions.values() 
+            depicted_entities = {qid.split('/')[-1]: {"n_questions": 0}
+                                 for depiction in depictions.values()
                                  for qid in depiction}
             # query data about all depicted entities
             depicted_entities = update_from_data(depicted_entities)
@@ -1033,6 +1012,7 @@ if __name__ == '__main__':
             entities = remove_alive_humans(entities, year_threshold=deceased)
         output = entities
         print_stats(output)
+
 
     # save output
     with open(path, 'w') as file:

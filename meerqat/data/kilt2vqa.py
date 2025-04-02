@@ -24,7 +24,7 @@ are replaced by the placeholder.
     
 
 -------
-``ner``
+``ned``
 -------
 .. image:: ../source_docs/kilt2vqa_nlp.png
 
@@ -98,17 +98,12 @@ Functions
 =========
 """
 
-import warnings
 import json
 import numpy as np
 import pandas as pd
 import random
 import re
 import spacy
-try:
-    from spacy.gold import align
-except ImportError as e:
-    warnings.warn(f"Got the following ImportError: {e}.\nTry using spacy==2.2.4")
 from spacy.symbols import DATE, TIME, PERCENT, MONEY, QUANTITY, ORDINAL, CARDINAL
 from spacy.symbols import dobj, nsubj, pobj, obj, nsubjpass, poss, obl, root
 
@@ -118,10 +113,12 @@ from tabulate import tabulate
 
 import requests
 
-from datasets import load_dataset, load_from_disk #, set_catching_enabled
+from datasets import load_dataset, load_from_disk, set_caching_enabled
 from meerqat.data.loading import map_kilt_triviaqa, DATA_ROOT_PATH
 from meerqat.data.wiki import HUMAN, RESERVED_IMAGES, special_path_to_file_name, file_name_to_thumbnail, thumbnail_to_file_name, save_image
 from meerqat.data.utils import md5
+
+import Levenshtein
 
 # spacy constants for NER
 INVALID_ENTITIES = {DATE, TIME, PERCENT, MONEY, QUANTITY, ORDINAL, CARDINAL}
@@ -150,9 +147,7 @@ random.seed(0)
 
 
 def wer(a, b):
-    """Compute Word Error Rate (word-level Levenshtein distance) using spacy"""
-    length = max(len(a), len(b))
-    return align(a, b)[0] / length
+    return 1 - Levenshtein.ratio(" ".join(a), " ".join(b))
 
 
 def item2placeholder(item, model=None):
@@ -252,14 +247,18 @@ def stringify(kilt_subset, field="placeholder", include_answer=True, include_pro
         if item[field]:
             result = [f"Q: {item['input']}"]
             for vq in item[field]:
-                result.append(f"-> {vq['input']} {vq['dependency'] if include_dep else ''}")
+                dependency_str = vq.get('dependency', '') if include_dep else ''
+                result.append(f"-> {vq.get('input', '')} {dependency_str}")
             if include_answer:
-                result.append(f"A: {item['output']['answer'][0]}")
-            if include_provenance and item['output']['provenance']:
-                result.append(f"\t{item['output']['provenance'][0]['title'][0]}")
+                result.append(f"A: {item['output'][0]['answer']}")
+            if include_provenance and item['output'][0]['provenance']:
+                result.append(f"\t{item['output'][0]['provenance'][0]['title']}")
             results.append("\n".join(result))
         else:
-            invalid.append(item['spacy_input'])
+            invalid_value = item.get('spacy_input', '')
+            if not isinstance(invalid_value, str):
+                invalid_value = str(invalid_value)
+            invalid.append(invalid_value)
     return "\n\n\n".join(results), "\n".join(invalid)
 
 
@@ -286,7 +285,7 @@ def ner(subset):
     print(f"Successfully saved output to '{output_path}'")
 
     # show N random examples
-    N = 100
+    N = 5
     indices = np.arange(kilt_subset.shape[0])
     np.random.shuffle(indices)
     randoms = [kilt_subset[i.item()] for i in indices[:N]]
@@ -298,25 +297,39 @@ def ner(subset):
 
 
 def disambiguate(item, wikipedia, wikipedia_ids, pedia_index):
-    """Go through candidate pages from TriviaQA and compute WER between entity mention and Wikipedia title/aliases
-    One should filter entities with a minimal WER of 0.5 (see 'wer' key)
+    """
+    Go through candidate pages from TriviaQA and compute WER between entity mention and Wikipedia title/aliases.
+    Update the entity information with wikidata_info, wikipedia_id, and computed wer.
     """
     for vq in item["placeholder"]:
         ent = vq["entity"]['text'].lower().strip().split()
         wers = {}
-        # process each wikipedia article only once (answer might come from different paragraphs but it's irrelevant for this)
-        provenances = {provenance['wikipedia_id'][0]: re.sub("\(.+\)", "", provenance['title'][0].lower()).strip() for
-                       provenance in item['output']['provenance']}
+        candidate = next((cand for cand in item['output'] if cand.get('provenance')), None)
+        if candidate is None or not candidate.get('provenance'):
+            continue
+
+        provenances = {
+            prov['wikipedia_id']: re.sub(r"\(.+\)", "", prov['title'].lower()).strip()
+            for prov in candidate['provenance']
+        }
         for wid, title in provenances.items():
             aliases = {title}
-            # get aliases from wikipedia
-            pedia_index.setdefault(wid, np.where(wikipedia_ids == wid)[0].item())
+            if wid not in pedia_index:
+                indices = np.where(wikipedia_ids == wid)[0]
+                if len(indices) == 0:
+                    continue
+                pedia_index[wid] = indices[0].item()
             wiki_item = wikipedia[pedia_index[wid]]
             aliases.update({alias.lower().strip() for alias in wiki_item['wikidata_info']['aliases']['alias']})
-            # compute WER and keep minimal for all aliases
-            word_er = min([wer(ent, alias.split()) for alias in aliases])
+            try:
+                word_er = min([wer(ent, alias.split()) for alias in aliases])
+            except ValueError:
+                word_er = 1.0
             wers[wid] = word_er
-        # keep minimal WER for all candidate articles
+
+        if not wers:
+            continue
+
         best_provenance = min(wers, key=wers.get)
         best_wer = wers[best_provenance]
         wiki_item = wikipedia[pedia_index[best_provenance]]
@@ -326,24 +339,24 @@ def disambiguate(item, wikipedia, wikipedia_ids, pedia_index):
     return item
 
 
-def ned(subset, **map_kwargs):
+def ned(subset, load_from_cache_file=True):
     """
-    2nd step: Named Entity Disambiguation (NED) using TriviaQA provided list
+    2nd step: Named Entity Disambiguation (NED) using TriviaQA provided list.
     Assumes that you already ran NER and loads dataset from f"{DATA_ROOT_PATH}/meerqat_{subset}"
-    and wikipedia from DATA_ROOT_PATH
+    and wikipedia from DATA_ROOT_PATH.
     """
     # load data
     dataset = load_from_disk(DATA_ROOT_PATH / f"meerqat_{subset}")
-    wikipedia = load_dataset('kilt_wikipedia', cache_dir=DATA_ROOT_PATH)['full']
+    wikipedia = load_dataset('kilt_wikipedia', cache_dir=DATA_ROOT_PATH, trust_remote_code=True)['full']
     wikipedia_ids = np.array(wikipedia["wikipedia_id"])
     pedia_index = {}
     fn_kwargs = {"wikipedia": wikipedia, "wikipedia_ids": wikipedia_ids, "pedia_index": pedia_index}
 
-    # go through dataset
-    dataset = dataset.map(disambiguate, fn_kwargs=fn_kwargs, **map_kwargs)
+    # Apply NED mapping
+    dataset = dataset.map(disambiguate, fn_kwargs=fn_kwargs, load_from_cache_file=load_from_cache_file)
 
     # save data
-    output_path = DATA_ROOT_PATH / f"meerqat_{subset}"
+    output_path = DATA_ROOT_PATH / f"meerqat_{subset}2"
     dataset.save_to_disk(output_path)
     print(f"Successfully saved output to '{output_path}'")
 
@@ -358,7 +371,7 @@ def count_entities(subset, wer_threshold=0.5):
         for vq in item['placeholder']:
             total += 1
             entity = vq['entity']
-            if entity['wer'] > wer_threshold:
+            if entity.get('wer') is None or entity['wer'] > wer_threshold:
                 continue
             disambiguated += 1
             wikidata_id = entity['wikidata_info']['wikidata_id']
@@ -386,32 +399,31 @@ def generate_mention(item, entities, wer_threshold=0.5, feminine_labels={}):
             "instanceof": []
         }
 
-        # filter ambiguous entities and skip filtered entities
-        qid = entity['wikidata_info']['wikidata_id']
+        if not entity.get('wikidata_info'):
+            vq['ambiguous_mentions'] = ambiguous_mentions
+            continue
+
+        qid = entity['wikidata_info'].get('wikidata_id')
+        if not qid:
+            vq['ambiguous_mentions'] = ambiguous_mentions
+            continue
+
         entity_data = entities.get(qid)
-        if entity['wer'] > wer_threshold or not entity_data:
+        if entity.get('wer', 1.0) > wer_threshold or not entity_data:
             vq['ambiguous_mentions'] = ambiguous_mentions
             continue
 
         dependency = vq['dependency']
-
         gender = entity_data.get('gender', {}).get('value')
         gender = gender.split("/")[-1] if gender else gender
         human = HUMAN in entity_data.get('instanceof', {})
         taxon_rankLabel = entity_data.get('taxon_rankLabel', {}).get('value')
-        # man_woman and pronouns
+
         if gender not in ANIMAL_SEX:
-            # man_woman
             if gender in HE_GENDER:
                 ambiguous_mentions["man_woman"].append("this man")
             elif gender in SHE_GENDER:
                 ambiguous_mentions["man_woman"].append("this woman")
-            elif gender in NA_GENDER or not gender:
-                pass
-            else:
-                warnings.warn(f"No case were set for this gender: '{gender}'")
-
-            # pronouns
             if dependency in HE_SHE_DEP:
                 if gender in HE_GENDER:
                     ambiguous_mentions["pronouns"].append("he")
@@ -427,34 +439,27 @@ def generate_mention(item, entities, wer_threshold=0.5, feminine_labels={}):
                     ambiguous_mentions["pronouns"].append("his")
                 elif gender in SHE_GENDER:
                     ambiguous_mentions["pronouns"].append("hers")
-            else:
-                warnings.warn(f"No case were set for this dependency: '{dependency}'")
 
-        # occupation
         if entity_data.get('occupation') and human:
             for occupation in entity_data['occupation'].values():
                 feminine_label = feminine_labels.get(occupation['value'])
                 if feminine_label and gender in SHE_GENDER:
                     occupation_label = feminine_label
-                # default label is default value since most names in English don't have genders
                 else:
                     occupation_label = occupation['label']['value']
                 ambiguous_mentions['occupation'].append(f"this {occupation_label}")
-        # taxon rank (e.g. "species") or class (aka instanceof)
         elif not human:
-            # taxon rank
             if taxon_rankLabel:
                 ambiguous_mentions['instanceof'].append(f"this {taxon_rankLabel}")
-            # class (instanceof)
             else:
                 for instanceof in entity_data.get('instanceof', {}).values():
                     feminine_label = feminine_labels.get(instanceof['value'])
                     if feminine_label and gender in SHE_GENDER:
                         instanceof_label = feminine_label
-                    # default label is default value since most names in English don't have genders
                     else:
                         instanceof_label = instanceof['label']['value']
                     ambiguous_mentions['instanceof'].append(f"this {instanceof_label}")
+
         vq['ambiguous_mentions'] = ambiguous_mentions
 
     return item
@@ -483,8 +488,10 @@ def generate_mentions(subset, wer_threshold=0.5, **map_kwargs):
     dataset = dataset.map(generate_mention, fn_kwargs=fn_kwargs, **map_kwargs)
 
     # save data
-    dataset.save_to_disk(dataset_path)
-    print(f"Successfully saved output to '{dataset_path}'")
+    output_path = DATA_ROOT_PATH / f"meerqat_{subset}2"
+
+    dataset.save_to_disk(output_path)
+    print(f"Successfully saved output to '{output_path}'")
 
     total, with_mention = 0, 0
     for item in dataset:
@@ -611,8 +618,10 @@ def generate_vqs(subset, exclude_categories=set(), image_width=512, **map_kwargs
     dataset = dataset.map(generate_vq, fn_kwargs=dict(entities=entities, image_width=image_width), **map_kwargs)
 
     # save data
-    dataset.save_to_disk(dataset_path)
-    print(f"Successfully saved output to '{dataset_path}'")
+    output_path = DATA_ROOT_PATH / f"meerqat_{subset}2"
+
+    dataset.save_to_disk(output_path)
+    print(f"Successfully saved output to '{output_path}'")
 
     print(stats(dataset))
 
@@ -637,7 +646,7 @@ def labelstudio(*args, image_width=512, alternative_images=8, **kwargs):
             vq["image_caption"] = caption
             vq['question'] = item['input']
             vq["vq"] = vq.pop('input')
-            vq['answer'] = item['output']['answer'][0]
+            vq['answer'] = item['output'][0]['answer']
             vq['mentions'] = ", ".join(vq['mentions'])
             qid = vq['wikidata_id']
             entity = entities[qid]
@@ -646,7 +655,7 @@ def labelstudio(*args, image_width=512, alternative_images=8, **kwargs):
 
             # gather alternative images to vq["image"]
             # remember images are sorted in ASC order wrt their score, thus the [::-1] to reverse the list
-            for j, title in enumerate(entity["titles"][-alternative_images: ][::-1]):
+            for j, title in enumerate(entity["titles"][-alternative_images:][::-1]):
                 # remove "File:" prefix and extension
                 caption = re.match(r"File:(.+)\.\w+", title)
                 caption = caption.group(1) if caption is not None else title
@@ -663,19 +672,23 @@ def labelstudio(*args, image_width=512, alternative_images=8, **kwargs):
             i += 1
 
     # save output
-    out_path = DATA_ROOT_PATH / f"meerqat_{subset}" / "labelstudio.json"
-    with open(out_path, 'w') as file:
+    output_path = DATA_ROOT_PATH / f"meerqat_{subset}2" / "labelstudio.json"
+    with open(output_path, 'w') as file:
         json.dump(ls, file)
-    print(f"Successfully saved output to '{out_path}'")
+    print(f"Successfully saved output to '{output_path}'")
 
 
 def download_image(item, session, image_width=512):
-    file_name = thumbnail_to_file_name(item['url'])
-    thumbnail = file_name_to_thumbnail(file_name, image_width=image_width)
-    file_path = save_image(thumbnail, session)
-    file_name = file_path.name if file_path is not None else None
-    item['image'] = file_name
+    if 'vq' in item:
+        for vq in item['vq']:
+            # Kiểm tra nếu vq có khóa 'url'
+            if 'url' in vq:
+                file_name = thumbnail_to_file_name(vq['url'])
+                thumbnail = file_name_to_thumbnail(file_name, image_width=image_width)
+                file_path = save_image(thumbnail, session)
+                vq['image'] = file_path.name if file_path is not None else None
     return item
+
 
 
 def download_images(subset, fn_kwargs, num_shards=None, shard_index=None, **map_kwargs):
@@ -689,49 +702,10 @@ def download_images(subset, fn_kwargs, num_shards=None, shard_index=None, **map_
 
     dataset = dataset.map(download_image, fn_kwargs=fn_kwargs, **map_kwargs)
     if num_shards is None:
-        dataset.save_to_disk(dataset_path)
+        output_path = DATA_ROOT_PATH / f"meerqat_{subset}2"
+        dataset.save_to_disk(output_path)
     else:
         dataset.save_to_disk(dataset_path/f"shard_{shard_index}_of_{num_shards}")
-
-
-# if __name__ == '__main__':
-#     # parse arguments
-#     args = docopt(__doc__)
-#     subset = args['<subset>']
-#     map_kwargs_path = args['--map_kwargs']
-#     if map_kwargs_path:
-#         with open(map_kwargs_path, 'r') as file:
-#             map_kwargs = json.load(file)
-#     else:
-#         map_kwargs = {}
-#     set_caching_enabled(not args['--disable_caching'])
-#
-#     if args['ner']:
-#         ner(subset)
-#     elif args['ned']:
-#         ned(subset, **map_kwargs)
-#     elif args['count_entities']:
-#         wer_threshold = float(args['--threshold'])
-#         count_entities(subset, wer_threshold=wer_threshold)
-#     elif args['generate']:
-#         if args['mentions']:
-#             wer_threshold = float(args['--threshold'])
-#             generate_mentions(subset, wer_threshold=wer_threshold, **map_kwargs)
-#         elif args['vq']:
-#             exclude_categories = set(args['<categories_to_exclude>'])
-#             image_width = int(args['--image_width']) if args['--image_width'] is not None else None
-#             generate_vqs(subset, exclude_categories, image_width=image_width, **map_kwargs)
-#     elif args['labelstudio']:
-#         exclude_categories = set(args['<categories_to_exclude>'])
-#         alternative_images = int(args['--alternative_images'])
-#         image_width = int(args['--image_width']) if args['--image_width'] is not None else None
-#         labelstudio(subset, exclude_categories=exclude_categories, alternative_images=alternative_images, image_width=image_width)
-#     elif args['download']:
-#         image_width = int(args['--image_width']) if args['--image_width'] is not None else None
-#         num_shards = int(args['--num_shards']) if args['--num_shards'] is not None else None
-#         shard_index = int(args['--shard_index']) if args['--shard_index'] is not None else None
-#         download_images(subset, fn_kwargs=dict(image_width=image_width), num_shards=num_shards, shard_index=shard_index, **map_kwargs)
-#
 
 
 if __name__ == '__main__':
@@ -745,26 +719,23 @@ if __name__ == '__main__':
     else:
         map_kwargs = {}
 
-    # Kiểm soát caching thông qua biến `load_from_cache_file`
-    load_from_cache_file = not args['--disable_caching']
+    set_caching_enabled(not args['--disable_caching'])
 
     if args['ner']:
-        # Truyền `load_from_cache_file` nếu cần thiết trong hàm `ner`
-        ner(subset, load_from_cache_file=load_from_cache_file)
+        ner(subset)
     elif args['ned']:
-        # Truyền `load_from_cache_file` nếu cần thiết trong hàm `ned`
-        ned(subset, load_from_cache_file=load_from_cache_file, **map_kwargs)
+       ned(subset, **map_kwargs)
     elif args['count_entities']:
         wer_threshold = float(args['--threshold'])
         count_entities(subset, wer_threshold=wer_threshold)
     elif args['generate']:
         if args['mentions']:
             wer_threshold = float(args['--threshold'])
-            generate_mentions(subset, wer_threshold=wer_threshold, load_from_cache_file=load_from_cache_file, **map_kwargs)
+            generate_mentions(subset, wer_threshold=wer_threshold, **map_kwargs)
         elif args['vq']:
             exclude_categories = set(args['<categories_to_exclude>'])
             image_width = int(args['--image_width']) if args['--image_width'] is not None else None
-            generate_vqs(subset, exclude_categories, image_width=image_width, load_from_cache_file=load_from_cache_file, **map_kwargs)
+            generate_vqs(subset, exclude_categories, image_width=image_width, **map_kwargs)
     elif args['labelstudio']:
         exclude_categories = set(args['<categories_to_exclude>'])
         alternative_images = int(args['--alternative_images'])
@@ -774,4 +745,4 @@ if __name__ == '__main__':
         image_width = int(args['--image_width']) if args['--image_width'] is not None else None
         num_shards = int(args['--num_shards']) if args['--num_shards'] is not None else None
         shard_index = int(args['--shard_index']) if args['--shard_index'] is not None else None
-        download_images(subset, fn_kwargs=dict(image_width=image_width), num_shards=num_shards, shard_index=shard_index, load_from_cache_file=load_from_cache_file, **map_kwargs)
+        download_images(subset, fn_kwargs=dict(image_width=image_width), num_shards=num_shards, shard_index=shard_index, **map_kwargs)

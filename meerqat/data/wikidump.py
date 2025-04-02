@@ -1,24 +1,81 @@
 # coding: utf-8
 """
 **input/output**: ``entities.json``  
-Parses the dump (should be downloaded first, TODO add instructions), gathers images and assign them to the relevant entity given its common categories (retrieved in ``wiki.py commons rest``)  
+Parses the dump (should be downloaded first, or auto-downloaded by the preprocessor below), gathers images and assign them to the relevant entity given its common categories (retrieved in ``wiki.py commons rest``).
 Note that the wikicode is parsed very lazily and might need a second run depending on your application, e.g. templates are not expanded...
 
-Usage: wikidump.py <subset>
+Usage: wikidump.py <subset> [--num-threads=<n>]
+
+Options:
+    --num-threads=<n>   Số luồng sử dụng khi tải file dump (mặc định: 4)
 """
+
 import bz2
 import xml.etree.ElementTree as ET
 from tqdm import tqdm
 from docopt import docopt
 import json
-import re
 import pandas as pd
 
 from meerqat.data.loading import DATA_ROOT_PATH
 from meerqat.data.wiki import VALID_ENCODING
 
+import re
+from urllib.parse import urljoin
+from bs4 import BeautifulSoup
+import requests
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 NAMESPACE = {"mw": "http://www.mediawiki.org/xml/export-0.10/"}
+
+
+def download_single_file(link, download_dir):
+    filename = link.split("/")[-1]
+    file_path = download_dir / filename
+    if file_path.exists():
+        print(f"{filename} đã tồn tại, bỏ qua.")
+        return file_path
+    print(f"Đang tải {filename} ...")
+    with requests.get(link, stream=True) as r:
+        r.raise_for_status()
+        with open(file_path, "wb") as f:
+            for chunk in r.iter_content(chunk_size=8192):
+                if chunk:
+                    f.write(chunk)
+    print(f"Đã tải xong {filename}")
+    return file_path
+
+
+def download_dump_files(root_url, download_dir, num_threads=1, limit=None):
+    print(f"Accessing dump page: {root_url}")
+    response = requests.get(root_url)
+    if response.status_code != 200:
+        print("Không thể truy cập trang dump.")
+        return []
+    soup = BeautifulSoup(response.text, "html.parser")
+    links = []
+    pattern = re.compile(r"^commonswiki-latest-pages-articles[1-6]\.xml-.*\.bz2$")
+    for a in soup.find_all("a"):
+        href = a.get("href")
+        if href and pattern.match(href):
+            links.append(urljoin(root_url, href))
+    if limit:
+        links = links[:limit]
+    print(f"Tìm thấy {len(links)} file dump cần tải về.")
+    download_dir.mkdir(exist_ok=True)
+    downloaded_files = []
+    for i in range(0, len(links), num_threads):
+        group = links[i:i + num_threads]
+        print(f"Đang xử lý nhóm file: {group}")
+        with ThreadPoolExecutor(max_workers=num_threads) as executor:
+            futures = {executor.submit(download_single_file, link, download_dir): link for link in group}
+            for future in as_completed(futures):
+                try:
+                    file_path = future.result()
+                    downloaded_files.append(file_path)
+                except Exception as e:
+                    print(f"Lỗi tải file {futures[future]}: {e}")
+    return downloaded_files
 
 
 def parse_file(path):
@@ -31,14 +88,12 @@ def parse_file(path):
 
 
 def find(element, tag, namespace=NAMESPACE):
-    """test if element is None before returning ET.Element.find"""
     if element is None:
         return None
     return element.find(tag, namespace)
 
 
 def find_text(element, tag, namespace=NAMESPACE):
-    """returns result.text if result is not None"""
     result = find(element, tag, namespace)
     if result is None:
         return None
@@ -68,16 +123,13 @@ def process_article(article, entities, entity_categories):
 
         # find categories
         categories = set()
-        for internal_link in re.findall("\[\[(.+)\]\]", wikitext):
+        for internal_link in re.findall(r"\[\[(.+)\]\]", wikitext):
             if internal_link.lower().startswith("category:"):
-                # remove name from link
                 name = internal_link.find("|")
                 if name >= 0:
-                    internal_link = internal_link[: name]
-                # make "Category" sentence-cased
-                categories.add("C"+internal_link[1: ])
+                    internal_link = internal_link[:name]
+                categories.add("C" + internal_link[1:])
         # is there any entity with these categories?
-        # note this also filters in case we did not find any category in wikitext
         if not (categories & entity_categories):
             continue
 
@@ -114,7 +166,6 @@ def process_article(article, entities, entity_categories):
 
 
 def process_articles(dump_path, entities):
-    # set of all categories to enable faster search
     categories = {category for entity in entities.values() if entity["n_questions"] > 0
                            for category in entity.get("categories", {})}
     articles_path = list(dump_path.glob(r"commonswiki-latest-pages-articles[0-9]*"))
@@ -125,9 +176,15 @@ def process_articles(dump_path, entities):
 
 
 if __name__ == "__main__":
-    # parse arguments
     args = docopt(__doc__)
     subset = args['<subset>']
+    num_threads = int(args['--num-threads'])
+
+    root_dump_url = "https://dumps.wikimedia.org/commonswiki/latest/"
+    dump_dir = DATA_ROOT_PATH / "commonswiki"
+
+    downloaded_files = download_dump_files(root_dump_url, dump_dir, num_threads=num_threads, limit=None)
+    print(f"Number of dump files: {len(downloaded_files)}")
 
     # load entities
     subset_path = DATA_ROOT_PATH / f"meerqat_{subset}"
@@ -135,8 +192,7 @@ if __name__ == "__main__":
     with open(path, 'r') as file:
         entities = json.load(file)
 
-    dump_path = DATA_ROOT_PATH / "commonswiki"
-    process_articles(dump_path, entities)
+    process_articles(dump_dir, entities)
 
     # save output
     with open(path, 'w') as file:
@@ -144,5 +200,5 @@ if __name__ == "__main__":
 
     print(f"Successfully saved output to {path}")
 
-    n_images = [len(entity.get('images', [])) for entity in entities.values()]
+    n_images = [len(entity.get('images', {})) for entity in entities.values()]
     print(f"Gathered images from {len(entities)} entities:\n{pd.DataFrame(n_images).describe()}")

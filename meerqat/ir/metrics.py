@@ -90,7 +90,7 @@ def find_relevant(retrieved, original_answer, alternative_answers, kb, reference
         Defaults to 'passage'
     question_type: QuestionType, optional
         Relevant for InfoSeek. Defaults to String.
-        
+
     Returns
     -------
     original_relevant, relevant: List[int]
@@ -99,13 +99,13 @@ def find_relevant(retrieved, original_answer, alternative_answers, kb, reference
     original_relevant, relevant = [], []
     for i in retrieved:
         i = int(i)
-        
+
         if question_type == QuestionType.Numerical:
             if numerical_relevant(alternative_answers, kb[i][reference_key]):
                 original_relevant.append(i)
                 relevant.append(i)
                 continue
-        
+
         # N. B. loading kb[reference_key] in-memory and passing a List[str]
         # might not be so efficient because it requires to load the whole KB instead of a small retrieved subset
         passage = answer_preprocess(kb[i][reference_key])
@@ -123,13 +123,13 @@ def find_relevant(retrieved, original_answer, alternative_answers, kb, reference
                 break
     return original_relevant, relevant
 
-    
-def find_relevant_item(item, passages, title2index, article2passage=None, 
-                       reference_key='passage', save_as='provenance_indices', 
+
+def find_relevant_item(item, passages, title2index, article2passage=None,
+                       reference_key='passage', save_as='provenance_indices',
                        provenance_key='provenance', qrels={}):
     """
     Applies ``find_relevant`` with passages of articles linked to the question.
-    
+
     Parameters
     ----------
     item: dict
@@ -138,12 +138,12 @@ def find_relevant_item(item, passages, title2index, article2passage=None,
         Mapping article’s title to it’s index in the KB
     article2passage: dict[int, List[int]], optional
         Mapping article’s index to its corresponging passage indices
-        If None, we assume that passages is a collection of articles    
+        If None, we assume that passages is a collection of articles
     reference_key: str, optional
         Used to get the reference field in kb
         Defaults to 'passage'
     save_as: str, optional
-        Results will be saved under this name in the dataset, 
+        Results will be saved under this name in the dataset,
         with an 'original_answer_' prefix for passages that contain the original answer
         Defaults to 'provenance_indices'
     provenance_key: str, optional
@@ -171,10 +171,10 @@ def find_relevant_item(item, passages, title2index, article2passage=None,
         else:
             passage_indices = article2passage.get(article_index, [])
         o, r = find_relevant(
-            passage_indices, 
-            item['output']['original_answer'], 
-            item['output']['answer'], 
-            passages, 
+            passage_indices,
+            item['output']['original_answer'],
+            item['output']['answer'],
+            passages,
             reference_key=reference_key,
             question_type=QuestionType[item.get('question_type', 'String')]
         )
@@ -192,7 +192,7 @@ def find_relevant_dataset(dataset_path, save_as='provenance_indices', **kwargs):
     kwargs['save_as'] = save_as
     kwargs['qrels'] = {}
     dataset = dataset.map(find_relevant_item, fn_kwargs=kwargs)
-    dataset.save_to_disk(dataset_path)   
+    dataset.save_to_disk(dataset_path)
     qrels = kwargs['qrels']
     if isinstance(dataset, DatasetDict):
         for split, subset in dataset.items():
@@ -206,11 +206,11 @@ def find_relevant_dataset(dataset_path, save_as='provenance_indices', **kwargs):
 def fuse_qrels(qrels_paths):
     """
     Loads all qrels in qrels_paths and unions them under a single Qrels.
-    
+
     Parameters
     ----------
     qrels_paths: List[str]
-    
+
     Returns
     -------
     fused_qrels: ranx.Qrels
@@ -237,7 +237,7 @@ def fuse_qrels(qrels_paths):
 def load_runs(runs_paths=[], runs_dict={}, filter_q_ids=[]):
     """
     Loads runs from both run_paths and runs_dict. Eventually filters out some questions.
-    
+
     Parameters
     ----------
     runs_paths: List[str], optional
@@ -245,13 +245,13 @@ def load_runs(runs_paths=[], runs_dict={}, filter_q_ids=[]):
         {name of the run: path of the run}
     filter_q_ids: List[str]
         Question identifiers to filter from the runs
-        
+
     Returns
     -------
     runs: List[ranx.Run]
     """
     runs = []
-    
+
     # load runs from CLI
     for run_path in runs_paths:
         run = ranx.Run.from_file(run_path)
@@ -262,7 +262,7 @@ def load_runs(runs_paths=[], runs_dict={}, filter_q_ids=[]):
         for q_id in filter_q_ids:
             run.run.pop(q_id)
         runs.append(run)
-    
+
     # load runs from config file
     for name, run_path in runs_dict.items():
         run = ranx.Run.from_file(run_path)
@@ -270,14 +270,14 @@ def load_runs(runs_paths=[], runs_dict={}, filter_q_ids=[]):
         for q_id in filter_q_ids:
             run.run.pop(q_id)
         runs.append(run)
-    
+
     return runs
-        
+
 
 def compare(qrels_path, runs_paths=[], runs_dict={}, output_path=None, filter_q_ids=[], **kwargs):
     """
     Loads Qrels and Runs, feed them to ranx.compare and save result.
-    
+
     Parameters
     ----------
     qrels_path: str
@@ -295,7 +295,7 @@ def compare(qrels_path, runs_paths=[], runs_dict={}, output_path=None, filter_q_
     qrels = ranx.Qrels.from_file(qrels_path)
     for q_id in filter_q_ids:
         qrels.qrels.pop(q_id)
-    
+
     runs = load_runs(runs_paths, runs_dict=runs_dict, filter_q_ids=filter_q_ids)
 
     report = ranx.compare(
@@ -313,10 +313,10 @@ def compare(qrels_path, runs_paths=[], runs_dict={}, output_path=None, filter_q_
             file.write(report.to_latex())
 
 
-def cat_breakdown(qrels_path, runs_paths, cats, runs_dict={}, output_path=None, 
+def cat_breakdown(qrels_path, runs_paths, cats, runs_dict={}, output_path=None,
                   filter_q_ids=[], metrics=["mrr"]):
     """
-    qrels_path, runs_paths, runs_dict, output_path, filter_q_ids: 
+    qrels_path, runs_paths, runs_dict, output_path, filter_q_ids:
         see ``compare``
     cats: dict[str, List[str]]
         {category: list of question identifiers that belong to it}
@@ -326,15 +326,15 @@ def cat_breakdown(qrels_path, runs_paths, cats, runs_dict={}, output_path=None,
     if output_path is not None:
         output_path = Path(output_path)
         output_path.mkdir(exist_ok=True)
-        
-    qrels = ranx.Qrels.from_file(qrels_path)    
+
+    qrels = ranx.Qrels.from_file(qrels_path)
     runs = load_runs(runs_paths, runs_dict=runs_dict)
-    
+
     # break qrels by cat
     qrels_by_cat = {}
     for cat, q_ids in cats.items():
         qrels_by_cat[cat] = ranx.Qrels({q_id: qrels.qrels[q_id] for q_id in q_ids})
-    
+
     # break runs by cat
     runs_by_cat = []
     for run in runs:
@@ -342,7 +342,7 @@ def cat_breakdown(qrels_path, runs_paths, cats, runs_dict={}, output_path=None,
         for cat, q_ids in cats.items():
             run_by_cat[cat] = ranx.Run({q_id: run.run[q_id] for q_id in q_ids}, name=run.name)
         runs_by_cat.append(run_by_cat)
-            
+
     # compute metrics for each cat
     for metric in metrics:
         metric_by_cat = {}
@@ -352,7 +352,7 @@ def cat_breakdown(qrels_path, runs_paths, cats, runs_dict={}, output_path=None,
                 metric_by_cat.setdefault(run.name, {})
                 #TODO use compare instead of evaluate and print report with stat test
                 metric_by_cat[run.name][cat] = ranx.evaluate(qrels_of_cat, run, metric)
-        
+
         df = pd.DataFrame(metric_by_cat)
         means = df.mean()
         df = df.T
@@ -362,5 +362,100 @@ def cat_breakdown(qrels_path, runs_paths, cats, runs_dict={}, output_path=None,
         print('\n***********\n')
         if output_path is not None:
             df.to_csv(output_path/f'{metric}.csv')
-    
 
+
+def get_wtl_table(metrics, wtl_key='W', wtl_metric='precision@1'):
+    """
+    Formats either the wins, ties, or losses of the models against each other
+    according to wtl_key in a pandas.DataFrame
+
+    metrics: dict
+        loaded from the JSON output of ranx
+    wtl_key: str, optional
+        Whether to compute the win ('W'), tie ('T'), or loss ('L')
+    wtl_metric: str, optional
+        What does it mean to win?
+    """
+    for k in ["metrics", "model_names", "stat_test"]:
+        metrics.pop(k, None)
+    table = {}
+    for model, metric in metrics.items():
+        table[model] = {model:0}
+        for m2, wtl in metric['win_tie_loss'].items():
+            table[model][m2] = wtl[wtl_metric][wtl_key]
+    return pd.DataFrame(table).T
+
+
+if __name__ == '__main__':
+    args = docopt(__doc__)
+    wtl_key = None
+
+    if args['relevant']:
+        passages = load_from_disk(args['<passages>'])
+        with open(args['<title2index>'], 'r') as file:
+            title2index = json.load(file)
+        if args['<article2passage>'] is not None:
+            with open(args['<article2passage>'], 'r') as file:
+                article2passage = json.load(file, object_hook=json_integer_keys)
+        else:
+            article2passage = None
+        reference_key = args['--reference'] if args['--reference'] is not None else 'passage'
+        passages = passages.remove_columns([c for c in passages.column_names if c != reference_key])
+        save_as = args['--save'] if args['--save'] is not None else 'provenance_indices'
+        provenance_key = args['--provenance_key'] if args['--provenance_key'] is not None else 'provenance'
+        find_relevant_dataset(
+            Path(args['<dataset>']),
+            passages=passages,
+            title2index=title2index,
+            article2passage=article2passage,
+            reference_key=reference_key,
+            save_as=save_as,
+            provenance_key=provenance_key
+        )
+
+    elif args['qrels']:
+        qrels = fuse_qrels(args['<qrels>'])
+        qrels.save(args['--output'])
+
+    elif args['ranx']:
+        # usage: either cat_breakdown or compare
+        if args['--cats'] is not None:
+            with open(args['--cats'], 'rt') as file:
+                cats = json.load(file)
+        else:
+            cats = None
+        if args['--filter'] is not None:
+            with open(args['--filter'], 'rt') as file:
+                filter_q_ids = json.load(file)
+        else:
+            filter_q_ids = []
+        if args['--kwargs'] is not None:
+            with open(args['--kwargs'], 'rt') as file:
+                kwargs = json.load(file)
+        else:
+            kwargs = dict(metrics=["mrr@100", "precision@1", "precision@20", "hit_rate@20"])
+        if args['<run>'] is not None:
+            runs_paths = args['<run>']
+        else:
+            runs_paths = []
+        if cats is None:
+            compare(args['--qrels'], runs_paths, output_path=args['--output'],
+                    filter_q_ids=filter_q_ids, **kwargs)
+        else:
+            cat_breakdown(args['--qrels'], runs_paths, output_path=args['--output'],
+                          cats=cats, filter_q_ids=filter_q_ids, **kwargs)
+
+    elif args['win']:
+        wtl_key = 'W'
+    elif args['tie']:
+        wtl_key = 'T'
+    elif args['loss']:
+        wtl_key = 'L'
+    if wtl_key is not None:
+        metric = args['--metric']
+        if metric is None:
+            metric = 'precision@1'
+        with open(args['<metrics>'], 'rt') as file:
+            metrics = json.load(file)
+        wtl = get_wtl_table(metrics, wtl_key=wtl_key, wtl_metric=metric)
+        print(wtl.to_latex())
