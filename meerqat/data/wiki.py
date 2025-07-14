@@ -112,7 +112,7 @@ wiki.py data depicted <subset>
 wiki.py data superclasses <subset> [--n=<n>]
 wiki.py commons sparql depicts <subset>
 wiki.py commons sparql depicted <subset>
-wiki.py commons rest <subset> [--max_images=<max_images> --max_categories=<max_categories>]
+wiki.py commons rest <subset> [--max_images=<max_images> --max_categories=<max_categories> --max_threads=<max_threads>]
 wiki.py commons heuristics <subset> [<heuristic>...]
 wiki.py filter <subset> [--superclass=<level> --positive --negative --deceased=<year> <classes_to_exclude>...]
 
@@ -121,6 +121,7 @@ Options:
 --max_images=<n>                 Maximum number of images to query per entity/root category.
                                      Set to 0 if you only want to query categories [default: 1000].
 --max_categories=<n>             Maximum number of categories to query per entity/root category [default: 100].
+--max_threads=<n>                Maximum number of threads to use for concurrent image downloading [default: 4].
 <heuristic>...                   Heuristic to compute for the image, one of {"categories", "description", "depictions", "title"}
                                     Defaults to all valid heuristics (listed above)
 --superclass=<level>             Level of superclasses in the filter, int or "all" (defaults to None i.e. filter only classes)
@@ -691,9 +692,9 @@ def save_image(url, session):
     return image_path
 
 
-def update_from_commons_rest(entities, max_images=1000, max_categories=100):
+def update_from_commons_rest(entities, max_images=1000, max_categories=100, max_threads=4):
     n_images, n_categories = [], []
-    with ThreadPoolExecutor(max_workers=4) as executor:
+    with ThreadPoolExecutor(max_threads) as executor:
         for entity in tqdm(entities.values(), desc="Updating entities from Commons"):
             if entity.get('n_questions', 0) < 1 or "commons" not in entity:
                 continue
@@ -978,7 +979,8 @@ if __name__ == '__main__':
         elif args['rest']:
             max_images = int(args['--max_images'])
             max_categories = int(args['--max_categories'])
-            output = update_from_commons_rest(entities, max_images, max_categories)
+            max_threads = int(args['--max_threads'])
+            output = update_from_commons_rest(entities, max_images, max_categories, max_threads)
             print_stats(output)
         elif args['heuristics']:
             heuristics = set(args['<heuristic>']) if args['<heuristic>'] else VALID_IMAGE_HEURISTICS

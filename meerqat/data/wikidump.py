@@ -4,10 +4,10 @@
 Parses the dump (should be downloaded first, or auto-downloaded by the preprocessor below), gathers images and assign them to the relevant entity given its common categories (retrieved in ``wiki.py commons rest``).
 Note that the wikicode is parsed very lazily and might need a second run depending on your application, e.g. templates are not expanded...
 
-Usage: wikidump.py <subset> [--num-threads=<n>]
+Usage: wikidump.py <subset> [--max_threads=<max_threads>]
 
 Options:
-    --num-threads=<n>   Số luồng sử dụng khi tải file dump (mặc định: 4)
+--max_threads=<n>                Maximum number of threads to use for concurrent image downloading [default: 4].
 """
 
 import bz2
@@ -46,7 +46,7 @@ def download_single_file(link, download_dir):
     return file_path
 
 
-def download_dump_files(root_url, download_dir, num_threads=1, limit=None):
+def download_dump_files(root_url, download_dir, max_threads=1, limit=None):
     print(f"Accessing dump page: {root_url}")
     response = requests.get(root_url)
     if response.status_code != 200:
@@ -64,10 +64,10 @@ def download_dump_files(root_url, download_dir, num_threads=1, limit=None):
     print(f"Tìm thấy {len(links)} file dump cần tải về.")
     download_dir.mkdir(exist_ok=True)
     downloaded_files = []
-    for i in range(0, len(links), num_threads):
-        group = links[i:i + num_threads]
+    for i in range(0, len(links), max_threads):
+        group = links[i:i + max_threads]
         print(f"Đang xử lý nhóm file: {group}")
-        with ThreadPoolExecutor(max_workers=num_threads) as executor:
+        with ThreadPoolExecutor(max_workers=max_threads) as executor:
             futures = {executor.submit(download_single_file, link, download_dir): link for link in group}
             for future in as_completed(futures):
                 try:
@@ -178,13 +178,13 @@ def process_articles(dump_path, entities):
 if __name__ == "__main__":
     args = docopt(__doc__)
     subset = args['<subset>']
-    num_threads = int(args['--num-threads'])
+    max_threads = int(args['--max_threads'])
 
     root_dump_url = "https://dumps.wikimedia.org/commonswiki/latest/"
     dump_dir = DATA_ROOT_PATH / "commonswiki"
 
-    downloaded_files = download_dump_files(root_dump_url, dump_dir, num_threads=num_threads, limit=None)
-    print(f"Number of dump files: {len(downloaded_files)}")
+    # downloaded_files = download_dump_files(root_dump_url, dump_dir, max_threads=max_threads, limit=None)
+    # print(f"Number of dump files: {len(downloaded_files)}")
 
     # load entities
     subset_path = DATA_ROOT_PATH / f"meerqat_{subset}"

@@ -11,6 +11,6 @@ transformers>=4.22.2
 optuna>=2.9.1
 scikit-image
 opencv-python>=4.5.3
-faiss-gpu>=1.7.1
+# faiss-gpu>=1.7.1
 ranx>=0.3.2
 pytorch-lightning[extra]>=1.7.7
